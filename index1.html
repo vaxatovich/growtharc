@@ -1,0 +1,1703 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Growth Arc</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg0:#05060a;--bg1:#080b12;--bg2:#0d1020;--bg3:#131828;--bg4:#1a2035;--bg5:#1f2740;
+  --p:#7b2fff;--p2:#5a1fd4;--p3:#9d5cff;--p4:rgba(123,47,255,.15);--p5:rgba(123,47,255,.06);
+  --b:#1a6fff;--b2:#0d4fd4;--b3:#4d94ff;--b4:rgba(26,111,255,.15);
+  --gp:0 0 20px rgba(123,47,255,.6),0 0 60px rgba(123,47,255,.2);
+  --gs:0 0 10px rgba(123,47,255,.4);
+  --gold:#f0c040;--gold2:rgba(240,192,64,.18);
+  --text:#e8ecf8;--text2:#8892b0;--text3:#4a5270;
+  --green:#00e5a0;--green2:rgba(0,229,160,.15);
+  --red:#ff4060;--red2:rgba(255,64,96,.15);
+  --orange:#ff8040;--orange2:rgba(255,128,64,.15);
+  --brd:rgba(123,47,255,.2);--brd2:rgba(255,255,255,.06);
+  --r:12px;--r2:8px;--r3:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{background:var(--bg0);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;overflow-x:hidden;max-width:430px;margin:0 auto;}
+/* BG */
+.bgl{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.bgl::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(123,47,255,.1) 0%,transparent 60%),
+             radial-gradient(ellipse 60% 40% at 100% 100%,rgba(26,111,255,.07) 0%,transparent 50%);}
+.bgr{position:absolute;inset:0;opacity:.025;
+  background-image:repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(123,47,255,.5) 40px,rgba(123,47,255,.5) 41px),
+                   repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(26,111,255,.5) 40px,rgba(26,111,255,.5) 41px);}
+.bgp{position:absolute;width:2px;height:2px;border-radius:50%;background:var(--p3);box-shadow:0 0 6px var(--p);animation:floatUp linear infinite;opacity:0;}
+@keyframes floatUp{0%{opacity:0;transform:translateY(100vh) scale(0)}10%{opacity:1}90%{opacity:1}100%{opacity:0;transform:translateY(-20px) scale(1.5)}}
+/* SCREENS */
+.screen{display:none;position:relative;z-index:1;padding-bottom:80px;min-height:100vh;}
+.screen.active{display:block;}
+#scr-ob{display:none;flex-direction:column;align-items:center;min-height:100vh;padding:2rem 1.25rem;}
+#scr-ob.active{display:flex;}
+/* ONBOARD */
+.ob-logo{font-family:'Orbitron',monospace;font-size:32px;font-weight:900;letter-spacing:4px;
+  background:linear-gradient(135deg,var(--p3),var(--b3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 20px rgba(123,47,255,.5));display:block;text-align:center;margin-bottom:4px;}
+.ob-sub{font-size:13px;letter-spacing:2px;color:var(--text3);text-align:center;margin-bottom:2rem;display:block;}
+.ob-sec{width:100%;margin-bottom:1rem;}
+.ob-lbl{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--p3);margin-bottom:6px;font-weight:600;display:flex;align-items:center;gap:6px;}
+.ob-inp{width:100%;background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r);color:var(--text);
+  font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:500;padding:13px 16px;outline:none;transition:.2s;}
+.ob-inp:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(123,47,255,.15);}
+.ob-inp::placeholder{color:var(--text3);}
+.ob-btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--p2),var(--b2));border:1px solid var(--brd);
+  border-radius:var(--r);color:var(--text);font-family:'Orbitron',monospace;font-size:13px;font-weight:700;
+  letter-spacing:3px;cursor:pointer;transition:.2s;box-shadow:var(--gp);margin-top:.5rem;display:flex;align-items:center;justify-content:center;gap:8px;}
+.ob-btn:disabled{opacity:.35;cursor:not-allowed;box-shadow:none;}
+.ob-btn:not(:disabled):active{transform:scale(.98);}
+/* LANG */
+.lang-row{display:flex;gap:8px;}
+.lang-btn{flex:1;padding:12px;border-radius:var(--r);border:1px solid var(--brd2);background:var(--bg3);color:var(--text2);font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600;cursor:pointer;text-align:center;transition:.15s;}
+.lang-btn.sel{background:var(--p4);border-color:var(--p);color:var(--p3);}
+/* CHIPS */
+.chip-wrap{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{padding:7px 13px;border-radius:20px;border:1px solid var(--brd2);background:var(--bg4);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;transition:.15s;font-family:'Rajdhani',sans-serif;}
+.chip.sel{background:var(--p4);border-color:var(--p);color:var(--p3);}
+.chip-add{padding:7px 13px;border-radius:20px;border:1px dashed var(--brd);background:transparent;color:var(--text3);font-size:12px;font-weight:600;cursor:pointer;font-family:'Rajdhani',sans-serif;}
+.chip-add:hover{border-color:var(--p);color:var(--p3);}
+.inp-row{display:flex;gap:8px;margin-top:8px;}
+.inp-row .ob-inp{flex:1;}
+.btn-plus{padding:12px 16px;background:var(--p4);border:1px solid var(--brd);border-radius:var(--r);color:var(--p3);font-size:18px;cursor:pointer;}
+.time-row{display:flex;gap:8px;}
+.time-sel{flex:1;background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:500;padding:12px 14px;outline:none;cursor:pointer;}
+/* SYS MSG */
+.sysmsg{background:linear-gradient(135deg,rgba(123,47,255,.08),rgba(26,111,255,.06));border:1px solid var(--brd);border-radius:var(--r);padding:12px 14px;font-size:13px;color:var(--text2);line-height:1.6;position:relative;overflow:hidden;}
+.sysmsg::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--p3),var(--b3));}
+.sysmsg-t{font-family:'Orbitron',monospace;font-size:11px;letter-spacing:2px;color:var(--p3);margin-bottom:4px;font-weight:700;}
+/* GA ICONS */
+.ga-icon{display:inline-block;vertical-align:middle;flex-shrink:0;}
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(5,6,10,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--brd);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;}
+.topbar-logo{font-family:'Orbitron',monospace;font-size:13px;font-weight:900;letter-spacing:3px;background:linear-gradient(135deg,var(--p3),var(--b3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 8px rgba(123,47,255,.4));}
+.tb-r{display:flex;align-items:center;gap:6px;}
+.tb-pill{display:flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--brd);border-radius:20px;padding:4px 10px;font-size:12px;font-weight:600;color:var(--text2);}
+.tb-pill.pu{color:var(--p3);}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);flex-shrink:0;}
+.sdot.dead{background:var(--text3);box-shadow:none;}
+/* CHAR CARD */
+.char-card{margin:12px;background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--brd);border-radius:var(--r3);padding:16px;position:relative;overflow:hidden;}
+.char-card::before{content:'';position:absolute;top:-40px;right:-40px;width:140px;height:140px;background:radial-gradient(circle,rgba(123,47,255,.1) 0%,transparent 70%);pointer-events:none;}
+.char-top{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+.char-av{width:64px;height:64px;border-radius:50%;border:2px solid var(--p);box-shadow:var(--gp);flex-shrink:0;position:relative;overflow:hidden;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:28px;}
+.char-av img{width:100%;height:100%;object-fit:cover;}
+.char-av::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:1px solid rgba(123,47,255,.3);animation:pring 2s ease-in-out infinite;}
+@keyframes pring{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.08);opacity:.2}}
+.char-name{font-family:'Cinzel',serif;font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.char-rank{font-size:11px;letter-spacing:2px;font-weight:600;background:linear-gradient(90deg,var(--p3),var(--b3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-top:2px;}
+.xp-hdr{display:flex;justify-content:space-between;margin-bottom:5px;align-items:center;}
+.xp-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);display:flex;align-items:center;gap:5px;}
+.xp-num{font-size:12px;font-weight:600;color:var(--p3);}
+.xp-track{height:8px;background:var(--bg5);border-radius:4px;overflow:visible;position:relative;}
+.xp-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--p2),var(--p3),var(--b3));transition:width .8s cubic-bezier(.4,0,.2,1);position:relative;box-shadow:0 0 10px rgba(123,47,255,.5);}
+.xp-fill::after{content:'';position:absolute;right:-2px;top:50%;transform:translateY(-50%);width:12px;height:12px;border-radius:50%;background:white;box-shadow:0 0 8px var(--p);}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
+.stat-box{background:var(--bg4);border:1px solid var(--brd2);border-radius:var(--r2);padding:10px 8px;text-align:center;}
+.stat-val{font-size:18px;font-weight:700;font-family:'Orbitron',monospace;}
+.stat-lbl{font-size:10px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-top:2px;display:flex;align-items:center;justify-content:center;gap:4px;}
+.streak-badge{display:inline-flex;align-items:center;gap:5px;background:var(--gold2);border:1px solid rgba(240,192,64,.3);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--gold);margin-top:10px;}
+.streak-saved{display:inline-flex;align-items:center;gap:5px;background:var(--green2);border:1px solid rgba(0,229,160,.3);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--green);margin-top:6px;margin-left:4px;}
+/* SECTION */
+.section{margin:0 12px 12px;}
+.sec-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.sec-title{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--text3);font-weight:600;display:flex;align-items:center;gap:5px;}
+/* SKILLS */
+.skill-row{display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--brd2);border-radius:var(--r2);padding:8px 12px;margin-bottom:6px;}
+.sk-name{font-size:13px;font-weight:600;color:var(--text2);min-width:80px;}
+.sk-bw{flex:1;height:4px;background:var(--bg5);border-radius:2px;overflow:hidden;}
+.sk-bf{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--p2),var(--p3));transition:width .6s ease;}
+.sk-xp{font-size:11px;color:var(--p3);font-weight:600;min-width:50px;text-align:right;}
+/* MAIN BTNS */
+.btn-nq{margin:0 12px 8px;width:calc(100% - 24px);padding:14px;background:linear-gradient(135deg,var(--p2),var(--b2));border:1px solid var(--brd);border-radius:var(--r);color:var(--text);font-family:'Orbitron',monospace;font-size:12px;font-weight:700;letter-spacing:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:var(--gp);position:relative;overflow:hidden;}
+.btn-nq::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);animation:shimmer 3s infinite;}
+@keyframes shimmer{to{left:200%}}
+.btn-nq:active{transform:scale(.98);}
+.btn-share-prog{margin:0 12px 12px;width:calc(100% - 24px);padding:12px;background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r);color:var(--p3);font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:1px;}
+/* QUEST CARD */
+.quest-list{display:flex;flex-direction:column;gap:10px;padding:12px;}
+.qcard{background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--brd);border-radius:var(--r3);padding:14px 16px;position:relative;overflow:hidden;transition:border-color .2s;}
+.qcard.overdue{border-color:rgba(255,64,96,.4);}
+.qcard::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--p3),var(--b3));box-shadow:var(--gs);}
+.qcard.overdue::before{background:linear-gradient(180deg,var(--red),var(--orange));}
+.qcard-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.qcard-title{font-size:15px;font-weight:700;flex:1;margin-right:8px;}
+.qcard-top-r{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.btn-edit-q{width:28px;height:28px;background:var(--bg4);border:1px solid var(--brd2);border-radius:var(--r2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;padding:0;}
+.btn-edit-q:hover{border-color:var(--p);}
+.xp-badge{background:var(--gold2);border:1px solid rgba(240,192,64,.3);border-radius:6px;padding:3px 8px;font-size:12px;font-weight:700;color:var(--gold);white-space:nowrap;display:flex;align-items:center;gap:4px;}
+.qcard-meta{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.tag{font-size:11px;padding:3px 8px;border-radius:6px;font-weight:600;display:inline-flex;align-items:center;gap:3px;}
+.tag-skill{background:var(--p4);border:1px solid rgba(123,47,255,.3);color:var(--p3);}
+.tag-easy{background:rgba(0,229,160,.1);border:1px solid rgba(0,229,160,.3);color:var(--green);}
+.tag-medium{background:rgba(240,192,64,.1);border:1px solid rgba(240,192,64,.3);color:var(--gold);}
+.tag-hard{background:rgba(255,64,96,.1);border:1px solid rgba(255,64,96,.3);color:var(--red);}
+.tag-type{background:var(--b4);border:1px solid rgba(26,111,255,.3);color:var(--b3);}
+.tag-dl{background:var(--orange2);border:1px solid rgba(255,128,64,.3);color:var(--orange);}
+.tag-overdue{background:var(--red2);border:1px solid rgba(255,64,96,.4);color:var(--red);}
+/* PROGRESS */
+.prog-hdr{display:flex;justify-content:space-between;margin-bottom:5px;}
+.prog-lbl{font-size:11px;color:var(--text3);}
+.prog-val{font-size:11px;font-weight:700;color:var(--p3);}
+.prog-wrap{position:relative;padding:8px 0;cursor:pointer;}
+.prog-track{height:6px;background:var(--bg5);border-radius:3px;overflow:visible;}
+.prog-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--p2),var(--p3),var(--b3));transition:width .1s ease;position:relative;box-shadow:0 0 8px rgba(123,47,255,.4);}
+.prog-fill::after{content:'';position:absolute;right:-8px;top:50%;transform:translateY(-50%);width:16px;height:16px;border-radius:50%;background:white;box-shadow:0 0 8px var(--p);cursor:grab;}
+/* TIMER */
+.timer-block{background:var(--bg4);border:1px solid var(--brd2);border-radius:var(--r2);padding:10px 12px;margin-top:8px;}
+.timer-hdr{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+.timer-display{font-family:'Orbitron',monospace;font-size:22px;font-weight:700;color:var(--p3);text-align:center;letter-spacing:2px;flex:1;}
+.timer-btns{display:flex;gap:6px;}
+.timer-btn{flex:1;padding:8px;border-radius:var(--r2);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;cursor:pointer;border:1px solid var(--brd2);background:var(--bg5);color:var(--text2);transition:.15s;display:flex;align-items:center;justify-content:center;gap:4px;}
+.timer-btn.start{background:var(--green2);border-color:rgba(0,229,160,.3);color:var(--green);}
+.timer-btn.pause{background:var(--gold2);border-color:rgba(240,192,64,.3);color:var(--gold);}
+.timer-btn.reset{background:var(--red2);border-color:rgba(255,64,96,.3);color:var(--red);}
+.qcard-btns{display:flex;gap:8px;margin-top:10px;}
+.btn-complete{flex:1;padding:10px;background:linear-gradient(135deg,var(--p2),var(--b2));border:1px solid var(--brd);border-radius:var(--r2);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:.15s;box-shadow:0 0 12px rgba(123,47,255,.3);display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-complete:disabled{opacity:.35;cursor:not-allowed;box-shadow:none;}
+.btn-del{padding:10px 12px;background:var(--bg4);border:1px solid var(--brd2);border-radius:var(--r2);color:var(--text3);font-size:16px;cursor:pointer;transition:.15s;display:flex;align-items:center;justify-content:center;}
+.btn-del:hover{border-color:rgba(255,64,96,.4);}
+.q-empty{text-align:center;padding:3rem 1rem;color:var(--text3);font-size:14px;line-height:1.7;}
+.q-empty-icon{margin-bottom:12px;opacity:.4;display:block;}
+/* LOG */
+.log-list{display:flex;flex-direction:column;gap:8px;padding:12px;}
+.log-card{background:var(--bg3);border:1px solid var(--brd2);border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;gap:12px;}
+.log-ico{width:36px;height:36px;border-radius:50%;background:var(--p4);border:1px solid rgba(123,47,255,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.log-info{flex:1;min-width:0;}
+.log-title{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.log-meta{font-size:11px;color:var(--text3);margin-top:2px;}
+.log-xp{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:var(--gold);white-space:nowrap;}
+/* DONUT */
+.chart-section{padding:12px;padding-top:0;}
+.chart-wrap{position:relative;width:160px;height:160px;margin:0 auto 16px;}
+.donut-legend{display:flex;flex-direction:column;gap:6px;}
+.legend-row{display:flex;align-items:center;gap:8px;font-size:13px;}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.legend-name{flex:1;color:var(--text2);}
+.legend-pct{font-weight:700;font-family:'Orbitron',monospace;font-size:11px;}
+.chart-toggle{display:flex;gap:6px;margin-bottom:12px;}
+.chart-toggle-btn{flex:1;padding:8px;border-radius:var(--r2);border:1px solid var(--brd2);background:var(--bg4);color:var(--text3);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
+.chart-toggle-btn.active{background:var(--p4);border-color:var(--p);color:var(--p3);}
+/* SETTINGS */
+.settings-body{padding:12px;}
+.set-sec{background:var(--bg2);border:1px solid var(--brd2);border-radius:var(--r3);padding:14px;margin-bottom:12px;}
+.set-sec-t{font-family:'Orbitron',monospace;font-size:11px;letter-spacing:2px;color:var(--p3);margin-bottom:12px;font-weight:700;display:flex;align-items:center;gap:6px;}
+.sk-edit-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--brd2);}
+.sk-edit-row:last-of-type{border-bottom:none;}
+.sk-edit-name{flex:1;font-size:14px;font-weight:600;}
+.sk-edit-inp{flex:1;background:var(--bg4);border:1px solid var(--brd);border-radius:var(--r2);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:14px;padding:6px 10px;outline:none;}
+.btn-ic{width:32px;height:32px;background:var(--bg4);border:1px solid var(--brd2);border-radius:var(--r2);color:var(--text3);cursor:pointer;transition:.15s;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.btn-ic.e:hover{border-color:var(--p);}
+.btn-ic.d:hover{border-color:rgba(255,64,96,.4);}
+.btn-ic.s{background:var(--p4);border-color:var(--p);color:var(--p3);}
+.set-add-row{display:flex;gap:8px;margin-top:10px;}
+.btn-save-set{width:100%;padding:11px;margin-top:10px;background:var(--p4);border:1px solid var(--brd);border-radius:var(--r);color:var(--p3);font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+/* BOTTOM NAV */
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:rgba(5,6,10,.95);backdrop-filter:blur(20px);border-top:1px solid var(--brd);display:none;justify-content:space-around;padding:6px 0 10px;z-index:100;}
+.bnav.show{display:flex;}
+.nav-i{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;color:var(--text3);font-family:'Rajdhani',sans-serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;padding:4px 8px;border-radius:var(--r2);transition:.15s;}
+.nav-i .ga-icon path,.nav-i .ga-icon line,.nav-i .ga-icon polyline,.nav-i .ga-icon polygon,.nav-i .ga-icon circle,.nav-i .ga-icon rect{stroke:var(--text3);transition:stroke .15s;}
+.nav-i.active{color:var(--p3);}
+.nav-i.active .ga-icon path,.nav-i.active .ga-icon line,.nav-i.active .ga-icon polyline,.nav-i.active .ga-icon polygon,.nav-i.active .ga-icon circle,.nav-i.active .ga-icon rect{stroke:url(#ga-hunter-gradient);}
+/* MODALS */
+.modal-ov{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.8);backdrop-filter:blur(8px);display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .25s;}
+.modal-ov.open{opacity:1;pointer-events:all;}
+.modal{width:100%;max-width:430px;margin:0 auto;background:linear-gradient(180deg,var(--bg3),var(--bg2));border:1px solid var(--brd);border-radius:var(--r3) var(--r3) 0 0;padding:20px 16px 32px;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);max-height:90vh;overflow-y:auto;}
+.modal-ov.open .modal{transform:translateY(0);}
+.modal-handle{width:36px;height:4px;border-radius:2px;background:var(--brd);margin:0 auto 20px;}
+.modal-title{font-family:'Cinzel',serif;font-size:17px;font-weight:700;text-align:center;margin-bottom:20px;background:linear-gradient(90deg,var(--p3),var(--b3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.form-grp{margin-bottom:14px;}
+.form-lbl{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;display:flex;align-items:center;gap:6px;font-weight:600;}
+.form-inp{width:100%;background:var(--bg4);border:1px solid var(--brd2);border-radius:var(--r);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:500;padding:12px 14px;outline:none;transition:.2s;}
+.form-inp:focus{border-color:var(--p);}
+.form-inp::placeholder{color:var(--text3);}
+.form-sel{width:100%;background:var(--bg4);border:1px solid var(--brd2);border-radius:var(--r);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:500;padding:12px 14px;outline:none;cursor:pointer;}
+.diff-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.diff-btn{padding:10px;border-radius:var(--r);border:1px solid var(--brd2);background:var(--bg4);font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;text-align:center;}
+.diff-btn[data-d=easy]{color:var(--green);}
+.diff-btn[data-d=easy].sel{background:rgba(0,229,160,.1);border-color:rgba(0,229,160,.4);}
+.diff-btn[data-d=medium]{color:var(--gold);}
+.diff-btn[data-d=medium].sel{background:rgba(240,192,64,.1);border-color:rgba(240,192,64,.4);}
+.diff-btn[data-d=hard]{color:var(--red);}
+.diff-btn[data-d=hard].sel{background:rgba(255,64,96,.1);border-color:rgba(255,64,96,.4);}
+.type-row{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+.type-btn{padding:10px;border-radius:var(--r);border:1px solid var(--brd2);background:var(--bg4);font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;text-align:center;color:var(--text2);display:flex;align-items:center;justify-content:center;gap:6px;}
+.type-btn.sel{background:var(--b4);border-color:rgba(26,111,255,.5);color:var(--b3);}
+.goal-row{display:flex;gap:8px;}
+.goal-row .form-inp{flex:2;}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;background:var(--bg4);border:1px solid var(--brd2);border-radius:var(--r);padding:12px 14px;}
+.toggle-lbl{font-size:14px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:6px;}
+.toggle{position:relative;width:44px;height:24px;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:var(--bg5);border-radius:12px;transition:.2s;cursor:pointer;border:1px solid var(--brd2);}
+.toggle-slider::before{content:'';position:absolute;width:18px;height:18px;left:2px;top:2px;background:var(--text3);border-radius:50%;transition:.2s;}
+.toggle input:checked+.toggle-slider{background:var(--p4);border-color:var(--p);}
+.toggle input:checked+.toggle-slider::before{transform:translateX(20px);background:var(--p3);}
+.btn-submit{width:100%;padding:14px;margin-top:16px;background:linear-gradient(135deg,var(--p2),var(--b2));border:1px solid var(--brd);border-radius:var(--r);color:var(--text);font-family:'Orbitron',monospace;font-size:12px;font-weight:700;letter-spacing:2px;cursor:pointer;transition:.2s;box-shadow:var(--gp);display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-submit:disabled{opacity:.35;cursor:not-allowed;box-shadow:none;}
+/* RESULT */
+.result-ov{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.92);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.3s;}
+.result-ov.show{opacity:1;pointer-events:all;}
+.result-box{background:linear-gradient(135deg,var(--bg3),var(--bg2));border:1px solid var(--p);border-radius:var(--r3);padding:28px 24px;width:90%;max-width:360px;text-align:center;box-shadow:var(--gp);animation:resPop .4s cubic-bezier(.4,0,.2,1);}
+@keyframes resPop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+.res-title{font-family:'Orbitron',monospace;font-size:11px;letter-spacing:4px;color:var(--p3);margin-bottom:6px;}
+.res-main{font-family:'Cinzel',serif;font-size:20px;font-weight:700;margin-bottom:12px;}
+.res-xp{font-family:'Orbitron',monospace;font-size:36px;font-weight:900;background:linear-gradient(135deg,var(--gold),var(--p3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 20px rgba(240,192,64,.5));margin-bottom:16px;}
+.res-rows{background:var(--bg4);border-radius:var(--r);padding:14px;margin-bottom:16px;text-align:left;}
+.res-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--brd2);font-size:13px;}
+.res-row:last-child{border-bottom:none;}
+.res-row-l{color:var(--text3);}
+.res-row-v{font-weight:600;}
+.res-row-v.g{color:var(--green);}
+.res-row-v.gold{color:var(--gold);}
+.res-btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--p2),var(--b2));border:1px solid var(--brd);border-radius:var(--r);color:var(--text);font-family:'Orbitron',monospace;font-size:11px;letter-spacing:3px;cursor:pointer;box-shadow:var(--gp);}
+/* SHARE */
+.share-ov{position:fixed;inset:0;z-index:350;background:rgba(0,0,0,.92);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.3s;}
+.share-ov.show{opacity:1;pointer-events:all;}
+.share-wrap{width:90%;max-width:340px;}
+.share-preview{background:var(--bg3);border:1px solid var(--brd2);border-radius:var(--r);overflow:hidden;margin-bottom:12px;}
+.share-preview canvas{display:block;width:100%;height:auto;}
+.sh-actions{display:flex;gap:8px;}
+.sh-actions button{flex:1;padding:11px;border-radius:var(--r);font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-sh-close{background:var(--bg3);border:1px solid var(--brd2);color:var(--text2);}
+.btn-sh-do{background:linear-gradient(135deg,var(--p2),var(--b2));border:1px solid var(--brd);color:var(--text);box-shadow:var(--gp);}
+/* LVL UP */
+.lu-ov{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.3s;}
+.lu-ov.show{opacity:1;pointer-events:all;}
+.lu-box{text-align:center;position:relative;}
+.lu-rays{position:absolute;inset:-60px;background:conic-gradient(from 0deg,transparent 0deg,rgba(123,47,255,.15) 20deg,transparent 40deg);animation:rot 8s linear infinite;border-radius:50%;}
+@keyframes rot{to{transform:rotate(360deg)}}
+.lu-lbl{font-family:'Orbitron',monospace;font-size:11px;letter-spacing:6px;color:var(--p3);margin-bottom:6px;position:relative;z-index:1;}
+.lu-num{font-family:'Orbitron',monospace;font-size:88px;font-weight:900;line-height:1;background:linear-gradient(135deg,var(--p3),var(--gold),var(--b3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 30px rgba(123,47,255,.6));animation:luPop .6s ease;position:relative;z-index:1;}
+@keyframes luPop{0%{transform:scale(.3);opacity:0}60%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+.lu-rank{font-family:'Cinzel',serif;font-size:16px;font-weight:700;color:var(--text2);margin-top:8px;position:relative;z-index:1;}
+.lu-btn{margin-top:28px;padding:12px 32px;background:linear-gradient(135deg,var(--p2),var(--b2));border:1px solid var(--brd);border-radius:var(--r);color:var(--text);font-family:'Orbitron',monospace;font-size:11px;letter-spacing:3px;cursor:pointer;box-shadow:var(--gp);position:relative;z-index:1;}
+/* INFO */
+.info-btn{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--bg5);border:1px solid var(--brd2);color:var(--text3);font-size:11px;cursor:pointer;font-weight:700;flex-shrink:0;}
+.info-popup{position:fixed;z-index:800;background:var(--bg3);border:1px solid var(--brd);border-radius:var(--r);padding:12px 14px;font-size:13px;color:var(--text2);line-height:1.6;max-width:260px;box-shadow:var(--gp);opacity:0;pointer-events:none;transition:.2s;}
+.info-popup.show{opacity:1;pointer-events:all;}
+/* TOAST */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg3);border:1px solid var(--brd);border-radius:24px;padding:10px 20px;font-size:13px;font-weight:600;color:var(--p3);box-shadow:var(--gs);opacity:0;pointer-events:none;transition:.3s;white-space:nowrap;z-index:500;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.xpfly{position:fixed;z-index:600;pointer-events:none;font-family:'Orbitron',monospace;font-size:24px;font-weight:900;color:var(--gold);text-shadow:0 0 20px rgba(240,192,64,.8);opacity:0;}
+.xpfly.go{animation:xpA 1.2s cubic-bezier(.4,0,.2,1) forwards;}
+@keyframes xpA{0%{opacity:0;transform:translateY(0) scale(.5)}15%{opacity:1;transform:translateY(-20px) scale(1.2)}70%{opacity:1;transform:translateY(-70px) scale(1)}100%{opacity:0;transform:translateY(-100px) scale(.8)}}
+::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-track{background:var(--bg1);}::-webkit-scrollbar-thumb{background:var(--p2);border-radius:2px;}
+</style>
+</head>
+<body>
+<div class="bgl"><div class="bgr"></div></div>
+
+<!-- SVG DEFS for icon gradients (shared) -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="grad-main" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9D5CFF"/>
+      <stop offset="100%" stop-color="#4D94FF"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<!-- ══ ONBOARDING ══ -->
+<div id="scr-ob" class="screen active">
+  <span class="ob-logo">GROWTH ARC</span>
+  <span class="ob-sub" id="ob-tagline">Преврати цели в квесты, а рутину в игру</span>
+  <div class="sysmsg" style="margin-bottom:1.5rem;width:100%">
+    <div class="sysmsg-t" id="ob-sys-title">[ СИСТЕМНОЕ СООБЩЕНИЕ ]</div>
+    <span id="ob-sys-text">Обнаружен новый охотник. Пройдите регистрацию для доступа к системе Growth Arc.</span>
+  </div>
+  <div class="ob-sec">
+    <span class="ob-lbl">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" class="ga-icon"><g stroke="url(#grad-main)" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M4.3 5.2h8.7"/><path d="M8.65 3.6v1.6"/><path d="M6 8.15c1.2 2.8 3.05 4.85 6.15 6.1"/><path d="M11.45 5.2c-.7 4.15-2.8 7.3-6.25 9.65"/><path d="M14.2 20.4 18.2 9.7l4 10.7"/><path d="M15.3 17.25h5.8"/></g></svg>
+      <span id="lbl-lang">Язык / Language</span>
+    </span>
+    <div class="lang-row">
+      <div class="lang-btn sel" id="lang-ru" onclick="setLang('ru')">🇷🇺 Русский</div>
+      <div class="lang-btn" id="lang-en" onclick="setLang('en')">🇬🇧 English</div>
+    </div>
+  </div>
+  <div class="ob-sec">
+    <span class="ob-lbl" id="lbl-name">Имя охотника</span>
+    <input class="ob-inp" id="ob-name" placeholder="Введи своё имя..." maxlength="24"/>
+  </div>
+  <div class="ob-sec">
+    <span class="ob-lbl" id="lbl-skills">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" class="ga-icon"><g stroke="url(#grad-main)" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.3 20.7 12 12 20.7 3.3 12 12 3.3Z"/><path d="M12 7.2 16.8 12 12 16.8 7.2 12 12 7.2Z"/><path d="M12 3.3v3.9"/><path d="M12 16.8v3.9"/><path d="M3.3 12h3.9"/><path d="M16.8 12h3.9"/></g></svg>
+      Навыки для развития
+    </span>
+    <div class="chip-wrap" id="ob-skills-wrap">
+      <div class="chip" data-ru="Здоровье" data-en="Health" onclick="togglePreset(this)"><span class="chip-label">🫀 Здоровье</span></div>
+      <div class="chip" data-ru="Физическая форма" data-en="Fitness" onclick="togglePreset(this)"><span class="chip-label">💪 Физическая форма</span></div>
+      <div class="chip" data-ru="Деньги" data-en="Money" onclick="togglePreset(this)"><span class="chip-label">💰 Деньги</span></div>
+      <div class="chip" data-ru="Карьера" data-en="Career" onclick="togglePreset(this)"><span class="chip-label">🚀 Карьера</span></div>
+      <div class="chip-add" id="ob-chip-add" onclick="showObSkillInp()">+ <span id="lbl-add-skill">Свой навык</span></div>
+    </div>
+    <div class="inp-row" id="ob-skill-inp-row" style="display:none">
+      <input class="ob-inp" id="ob-skill-inp" maxlength="24"/>
+      <button class="btn-plus" onclick="addObCustomSkill()">+</button>
+    </div>
+  </div>
+  <div class="ob-sec">
+    <span class="ob-lbl">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" class="ga-icon"><g stroke="url(#grad-main)" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M6.8 10.15c0-3.2 2.1-5.35 5.2-5.35s5.2 2.15 5.2 5.35v3.05l1.65 2.9H5.15l1.65-2.9v-3.05Z"/><path d="M9.85 18.1a2.15 2.15 0 0 0 4.3 0"/><path d="M12 2.8v2"/></g></svg>
+      <span id="lbl-daytime">Начало игрового дня</span>
+      <span class="info-btn" onclick="showInfo('daytime',event)">?</span>
+    </span>
+    <div class="time-row">
+      <select class="time-sel" id="ob-hour">
+        <script>for(let h=0;h<24;h++)document.write('<option value="'+h+'"'+(h===6?' selected':'')+'>'+String(h).padStart(2,'0')+'</option>');</script>
+      </select>
+      <select class="time-sel" id="ob-min">
+        <option value="0" selected>00</option><option value="30">30</option>
+      </select>
+    </div>
+  </div>
+  <button class="ob-btn" id="ob-btn" onclick="startGame()" disabled>
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"><g stroke="white" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.25 16.75 5.5v4.1c0 4.3-2.05 7.8-4.75 9.65-2.7-1.85-4.75-5.35-4.75-9.65V5.5L12 3.25Z"/></g></svg>
+    <span id="lbl-enter">ВОЙТИ В СИСТЕМУ</span>
+  </button>
+</div>
+
+<!-- ══ MAIN APP ══ -->
+<div id="scr-app" class="screen">
+  <div class="topbar">
+    <div class="topbar-logo">GROWTH ARC</div>
+    <div class="tb-r">
+      <div class="tb-pill" id="tb-streak">
+        <span id="tb-sdot" class="sdot dead"></span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12.6 21c3.65-.55 6.15-3.25 6.15-6.85 0-2.55-1.35-4.55-3.1-6.2-.75 2-2.05 3.25-3.65 3.9.6-3.1-.7-5.5-3.25-7.6.05 3.2-1.8 5.15-2.75 6.8-.7 1.2-.95 2.25-.95 3.4 0 3.55 2.35 6 5.35 6.55"/></g></svg>
+        <span id="tb-snum">0</span>
+      </div>
+      <div class="tb-pill pu" id="tb-lvl">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"><g stroke="#9d5cff" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.4V4.1"/><path d="M7.15 8.95 12 4.1l4.85 4.85"/><path d="M5.15 19.9h13.7"/></g></svg>
+        <span id="tb-lvl-txt">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAR TAB -->
+  <div class="tab-pane active" id="tab-char">
+    <div class="char-card">
+      <div class="char-top">
+        <div class="char-av" id="char-av">⚔️</div>
+        <div style="flex:1;min-width:0">
+          <div class="char-name" id="char-name">—</div>
+          <div class="char-rank" id="char-rank">—</div>
+        </div>
+      </div>
+      <div class="xp-hdr">
+        <span class="xp-lbl">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"><g stroke="url(#grad-main)" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 18.2 7.15 15.85 20.2h-7.7L5.8 7.15 12 2.9Z"/><path d="M5.8 7.15h12.4"/><path d="M8.15 20.2 12 7.15l3.85 13.05"/></g></svg>
+          <span id="lbl-xp">Опыт</span>
+        </span>
+        <span class="xp-num" id="xp-num">0 / 100 XP</span>
+      </div>
+      <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="stat-val" id="s-quests">0</div>
+          <div class="stat-lbl">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"><g stroke="url(#grad-main)" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 14.2 8l5.55.5-4.2 3.65 1.25 5.45L12 14.75 7.2 17.6l1.25-5.45L4.25 8.5 9.8 8 12 2.9Z"/></g></svg>
+            <span id="sl-quests">Квестов</span>
+          </div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="s-lvl">0</div>
+          <div class="stat-lbl">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"><g stroke="url(#grad-main)" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.4V4.1"/><path d="M7.15 8.95 12 4.1l4.85 4.85"/><path d="M5.15 19.9h13.7"/></g></svg>
+            <span id="sl-level">Уровень</span>
+          </div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-val" id="s-xp">0</div>
+          <div class="stat-lbl">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"><g stroke="url(#grad-main)" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 18.2 7.15 15.85 20.2h-7.7L5.8 7.15 12 2.9Z"/><path d="M5.8 7.15h12.4"/><path d="M8.15 20.2 12 7.15l3.85 13.05"/></g></svg>
+            <span id="sl-xp">XP</span>
+          </div>
+        </div>
+      </div>
+      <div id="streak-info"></div>
+    </div>
+    <button class="btn-nq" onclick="openCreate()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"><g stroke="white" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.6v16.8"/><path d="M3.6 12h16.8"/></g></svg>
+      <span id="lbl-cq">СОЗДАТЬ КВЕСТ</span>
+    </button>
+    <button class="btn-share-prog" onclick="openShare()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"><g stroke="url(#grad-main)" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M8.15 12.85 15.85 17"/><path d="M15.85 7 8.15 11.15"/><circle cx="6" cy="12" r="2.3"/><circle cx="18" cy="7" r="2.3"/><circle cx="18" cy="17" r="2.3"/></g></svg>
+      <span id="lbl-share">ПОДЕЛИТЬСЯ ПРОГРЕССОМ</span>
+    </button>
+    <div class="section">
+      <div class="sec-hd">
+        <div class="sec-title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"><g stroke="url(#grad-main)" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.3 20.7 12 12 20.7 3.3 12 12 3.3Z"/><path d="M12 7.2 16.8 12 12 16.8 7.2 12 12 7.2Z"/></g></svg>
+          <span id="lbl-skills-sec">Навыки</span>
+        </div>
+      </div>
+      <div id="skills-list"></div>
+    </div>
+  </div>
+
+  <!-- QUESTS TAB -->
+  <div class="tab-pane" id="tab-quests" style="display:none">
+    <div class="quest-list" id="quest-list"></div>
+  </div>
+
+  <!-- LOG TAB -->
+  <div class="tab-pane" id="tab-log" style="display:none">
+    <div style="padding:12px 12px 4px">
+      <div class="chart-toggle">
+        <button class="chart-toggle-btn active" id="chart-by-xp" onclick="setChartMode('xp')">XP</button>
+        <button class="chart-toggle-btn" id="chart-by-time" onclick="setChartMode('time')" id="chart-time-btn">По времени</button>
+      </div>
+    </div>
+    <div class="chart-section">
+      <div class="chart-wrap"><canvas id="donut-canvas" width="160" height="160"></canvas></div>
+      <div class="donut-legend" id="donut-legend"></div>
+    </div>
+    <div class="log-list" id="log-list"></div>
+  </div>
+
+  <!-- SETTINGS TAB -->
+  <div class="tab-pane" id="tab-settings" style="display:none">
+    <div class="settings-body">
+      <div class="sysmsg" style="margin-bottom:12px">
+        <div class="sysmsg-t" id="set-sys-t">[ НАСТРОЙКИ СИСТЕМЫ ]</div>
+        <span id="set-sys-txt">Управляй навыками и параметрами охотника.</span>
+      </div>
+      <div class="set-sec">
+        <div class="set-sec-t">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"><g stroke="url(#grad-main)" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M4.3 5.2h8.7"/><path d="M8.65 3.6v1.6"/><path d="M6 8.15c1.2 2.8 3.05 4.85 6.15 6.1"/><path d="M11.45 5.2c-.7 4.15-2.8 7.3-6.25 9.65"/><path d="M14.2 20.4 18.2 9.7l4 10.7"/><path d="M15.3 17.25h5.8"/></g></svg>
+          <span id="set-lang-t">ЯЗЫК / LANGUAGE</span>
+        </div>
+        <div class="lang-row">
+          <div class="lang-btn" id="set-lang-ru" onclick="setLang('ru');save();renderAll()">🇷🇺 Русский</div>
+          <div class="lang-btn" id="set-lang-en" onclick="setLang('en');save();renderAll()">🇬🇧 English</div>
+        </div>
+      </div>
+      <div class="set-sec">
+        <div class="set-sec-t">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"><g stroke="url(#grad-main)" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.3 20.7 12 12 20.7 3.3 12 12 3.3Z"/><path d="M12 7.2 16.8 12 12 16.8 7.2 12 12 7.2Z"/></g></svg>
+          <span id="set-skills-t">НАВЫКИ</span>
+        </div>
+        <div id="skills-edit-list"></div>
+        <div class="set-add-row">
+          <input class="ob-inp" id="new-skill-inp" maxlength="24"/>
+          <button class="btn-plus" onclick="addNewSkill()">+</button>
+        </div>
+      </div>
+      <div class="set-sec">
+        <div class="set-sec-t">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"><g stroke="url(#grad-main)" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M6.8 10.15c0-3.2 2.1-5.35 5.2-5.35s5.2 2.15 5.2 5.35v3.05l1.65 2.9H5.15l1.65-2.9v-3.05Z"/><path d="M9.85 18.1a2.15 2.15 0 0 0 4.3 0"/><path d="M12 2.8v2"/></g></svg>
+          <span id="set-notif-t">НАЧАЛО ИГРОВОГО ДНЯ</span>
+          <span class="info-btn" onclick="showInfo('daytime',event)">?</span>
+        </div>
+        <div class="time-row">
+          <select class="time-sel" id="set-hour"></select>
+          <select class="time-sel" id="set-min"><option value="0">00</option><option value="30">30</option></select>
+        </div>
+        <button class="btn-save-set" onclick="saveTimeSettings()" id="btn-save-time">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bnav" id="bnav">
+  <button class="nav-i active" id="nav-char" onclick="switchTab('char')">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" class="ga-icon"><g stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.25 16.75 5.5v4.1c0 4.3-2.05 7.8-4.75 9.65-2.7-1.85-4.75-5.35-4.75-9.65V5.5L12 3.25Z"/><path d="M8.7 9.05c.85-1.25 1.95-1.85 3.3-1.85s2.45.6 3.3 1.85"/><path d="M9.45 12.1h5.1"/><path d="M10.25 15.25h3.5"/></g></svg>
+    <span id="nav-lbl-char">Охотник</span>
+  </button>
+  <button class="nav-i" id="nav-quests" onclick="switchTab('quests')">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" class="ga-icon"><g stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 14.2 8l5.55.5-4.2 3.65 1.25 5.45L12 14.75 7.2 17.6l1.25-5.45L4.25 8.5 9.8 8 12 2.9Z"/><path d="m16.8 4.7 2.5 2.5"/><path d="m5 19 5.1-5.1"/></g></svg>
+    <span id="nav-lbl-quests">Квесты</span>
+  </button>
+  <button class="nav-i" id="nav-log" onclick="switchTab('log')">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" class="ga-icon"><g stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M6.2 3.2h9.1c1.4 0 2.5 1.1 2.5 2.5v15.1H7.3a2.9 2.9 0 0 1-2.9-2.9V5a1.8 1.8 0 0 1 1.8-1.8Z"/><path d="M7.3 17.6h10.5"/><path d="M7.9 7.3h6.7"/><path d="M7.9 10.8h4.7"/></g></svg>
+    <span id="nav-lbl-log">Журнал</span>
+  </button>
+  <button class="nav-i" id="nav-settings" onclick="switchTab('settings')">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" class="ga-icon"><g stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.3 14 7l4.1.55-3 2.85.7 4.05L12 12.55 8.2 14.45l.7-4.05-3-2.85L10 7l2-3.7Z"/><path d="M4.35 12a7.65 7.65 0 1 0 15.3 0 7.65 7.65 0 0 0-15.3 0Z"/></g></svg>
+    <span id="nav-lbl-set">Система</span>
+  </button>
+</nav>
+
+<!-- CREATE/EDIT MODAL -->
+<div class="modal-ov" id="modal-ov" onclick="closeModalOut(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title-text">Новый квест</div>
+    <div class="form-grp">
+      <label class="form-lbl" id="lbl-qtitle">Название квеста</label>
+      <input class="form-inp" id="q-title" maxlength="60"/>
+    </div>
+    <div class="form-grp">
+      <label class="form-lbl">
+        <span id="lbl-goal">Цель</span>
+        <span class="info-btn" onclick="showInfo('goal',event)">?</span>
+      </label>
+      <div class="goal-row">
+        <input class="form-inp" id="q-goal-num" type="number" min="1" style="flex:2"/>
+        <select class="form-inp" id="q-goal-unit" style="flex:2" onchange="onUnitChange()">
+          <option value="" id="opt-nogoal">Без цели</option>
+          <option value="раз" id="opt-times">раз</option>
+          <option value="минут" id="opt-min">минут</option>
+          <option value="страниц" id="opt-pages">страниц</option>
+          <option value="километров" id="opt-km">километров</option>
+          <option value="подходов" id="opt-sets">подходов</option>
+          <option value="custom" id="opt-custom">Своё...</option>
+        </select>
+      </div>
+      <input class="form-inp" id="q-goal-custom" maxlength="12" style="display:none;margin-top:8px"/>
+    </div>
+    <div class="form-grp">
+      <label class="form-lbl" id="lbl-skill-sel">Навык</label>
+      <div class="chip-wrap" id="q-skill-wrap"></div>
+      <div class="inp-row" id="q-skill-inp-row" style="display:none">
+        <input class="form-inp" id="q-skill-inp" maxlength="24"/>
+        <button class="btn-plus" onclick="addModalSkill()">+</button>
+      </div>
+      <div style="margin-top:6px"><span class="chip-add" id="modal-add-skill-btn" onclick="showModalSkillInp()">+ <span id="lbl-add-skill-m">Новый навык</span></span></div>
+    </div>
+    <div class="form-grp">
+      <label class="form-lbl">
+        <span id="lbl-diff">Уровень сложности</span>
+        <span class="info-btn" onclick="showInfo('diff',event)">?</span>
+      </label>
+      <div class="diff-row">
+        <div class="diff-btn" data-d="easy" onclick="selDiff('easy')"><span id="diff-easy">Лёгкий</span><br><small>+10 XP</small></div>
+        <div class="diff-btn" data-d="medium" onclick="selDiff('medium')"><span id="diff-medium">Средний</span><br><small>+30 XP</small></div>
+        <div class="diff-btn" data-d="hard" onclick="selDiff('hard')"><span id="diff-hard">Высокий</span><br><small>+50 XP</small></div>
+      </div>
+    </div>
+    <div class="form-grp">
+      <label class="form-lbl">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"><g stroke="url(#grad-main)" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M6.2 8.8a6 6 0 0 1 10.95-1.5"/><path d="M17.15 7.3h-3.55V3.75"/><path d="M17.8 15.2a6 6 0 0 1-10.95 1.5"/><path d="M6.85 16.7h3.55v3.55"/></g></svg>
+        <span id="lbl-type">Тип квеста</span>
+        <span class="info-btn" onclick="showInfo('type',event)">?</span>
+      </label>
+      <div class="type-row">
+        <div class="type-btn" data-t="once" onclick="selType('once')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-width="1.65" stroke-linecap="round"><path d="m5.1 12.35 4.2 4.2 9.6-9.6"/></g></svg>
+          <span id="type-once">Разовый</span>
+        </div>
+        <div class="type-btn" data-t="daily" onclick="selType('daily')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-width="1.65" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></g></svg>
+          <span id="type-daily">Ежедневный</span>
+        </div>
+        <div class="type-btn" data-t="weekly" onclick="selType('weekly')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-width="1.65" stroke-linecap="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></g></svg>
+          <span id="type-weekly">Еженедельный</span>
+        </div>
+        <div class="type-btn" data-t="monthly" onclick="selType('monthly')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-width="1.65" stroke-linecap="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h2M14 14h2M8 18h2"/></g></svg>
+          <span id="type-monthly">Ежемесячный</span>
+        </div>
+      </div>
+    </div>
+    <div class="form-grp">
+      <label class="form-lbl">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"><g stroke="url(#grad-main)" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5.4h14v14H5v-14Z"/><path d="M8.2 3.5v3.8"/><path d="M15.8 3.5v3.8"/><path d="M5 9h14"/></g></svg>
+        <span id="lbl-deadline">Дедлайн</span>
+        <span class="info-btn" onclick="showInfo('deadline',event)">?</span>
+      </label>
+      <select class="form-sel" id="q-dl-type" onchange="updateDlUI()">
+        <option value="none" id="opt-nodeadline">Без дедлайна</option>
+        <option value="date" id="opt-setdate">Установить дату</option>
+      </select>
+      <input type="date" class="form-inp" id="q-dl-date" style="display:none;margin-top:8px"/>
+    </div>
+    <div class="form-grp">
+      <label class="form-lbl">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"><g stroke="url(#grad-main)" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 3.6h7"/><path d="M8.2 6.8v3.5c0 1.25.7 2.4 1.82 2.98L12 14.3l1.98-1.02A3.35 3.35 0 0 0 15.8 10.3V6.8"/><path d="M8.2 17.2v-3.5c0-1.25.7-2.4 1.82-2.98L12 9.7l1.98 1.02a3.35 3.35 0 0 1 1.82 2.98v3.5"/><path d="M6.7 17.2h10.6"/><path d="M8.5 20.4h7"/></g></svg>
+        <span id="lbl-timer-lbl">Отслеживать время</span>
+        <span class="info-btn" onclick="showInfo('timer',event)">?</span>
+      </label>
+      <div class="toggle-row">
+        <span class="toggle-lbl" id="lbl-timer-on">Таймер выполнения</span>
+        <label class="toggle"><input type="checkbox" id="q-timer"><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+    <button class="btn-submit" id="btn-submit" onclick="submitQuest()" disabled>
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"><g stroke="white" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.25 16.75 5.5v4.1c0 4.3-2.05 7.8-4.75 9.65-2.7-1.85-4.75-5.35-4.75-9.65V5.5L12 3.25Z"/></g></svg>
+      <span id="btn-submit-txt">ПРИНЯТЬ КВЕСТ</span>
+    </button>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div class="result-ov" id="result-ov">
+  <div class="result-box">
+    <div class="res-title" id="res-sys-title">[ КВЕСТ ВЫПОЛНЕН ]</div>
+    <div class="res-main" id="res-quest-title">—</div>
+    <div class="res-xp" id="res-xp">+50 XP</div>
+    <div class="res-rows" id="res-rows"></div>
+    <button class="res-btn" id="res-continue-btn" onclick="closeResult()">ПРОДОЛЖИТЬ</button>
+  </div>
+</div>
+
+<!-- SHARE -->
+<div class="share-ov" id="share-ov" onclick="closeShareOut(event)">
+  <div class="share-wrap">
+    <div class="share-preview">
+      <canvas id="share-canvas" width="540" height="675"></canvas>
+    </div>
+    <div class="sh-actions">
+      <button class="btn-sh-close" onclick="closeShare()">
+        <span id="lbl-close">Закрыть</span>
+      </button>
+      <button class="btn-sh-do" onclick="doShare()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"><g stroke="white" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M8.15 12.85 15.85 17"/><path d="M15.85 7 8.15 11.15"/><circle cx="6" cy="12" r="2.3"/><circle cx="18" cy="7" r="2.3"/><circle cx="18" cy="17" r="2.3"/></g></svg>
+        <span id="lbl-share-btn">Поделиться</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- LVL UP -->
+<div class="lu-ov" id="lu-ov" onclick="closeLU()">
+  <div class="lu-box">
+    <div class="lu-rays"></div>
+    <div class="lu-lbl" id="lu-lbl-txt">LEVEL UP</div>
+    <div class="lu-num" id="lu-num">1</div>
+    <div class="lu-rank" id="lu-rank">—</div>
+    <button class="lu-btn" id="lu-continue-btn" onclick="closeLU()">ПРОДОЛЖИТЬ</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="xpfly" id="xpfly"></div>
+<div class="info-popup" id="info-popup"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  CONSTANTS
+// ══════════════════════════════════════════════
+const RANKS=['Пробуждение','Новичок подземелья','Охотник E-ранга','Охотник D-ранга','Охотник C-ранга','Охотник B-ранга','Охотник A-ранга','Охотник S-ранга','Теневой ученик','Ночной разведчик','Клинок сумерек','Страж врат','Убийца монстров','Мастер ритуалов','Заклинатель дисциплины','Покоритель хаоса','Командир рейда','Архитектор привычек','Повелитель фокуса','Охотник бездны','Теневой капитан','Мастер подземелий','Хранитель энергии','Ночной стратег','Собиратель силы','Разрушитель лимитов','Каратель прокрастинации','Лорд навыков','Сердце рейда','Призрак прогресса','Высший охотник','Теневой генерал','Владыка квестов','Мастер эволюции','Повелитель стрика','Титан дисциплины','Король рейда','Архимаг фокуса','Бессмертный охотник','Судья бездны','Сияющий монарх','Темный стратег','Абсолютный гриндер','Мифический герой','Повелитель уровней','Легенда системы','Властелин силы воли','Сверхранг','Монарх прогресса','Живая легенда'];
+const RANKS_EN=['Awakening','Dungeon Novice','E-Rank Hunter','D-Rank Hunter','C-Rank Hunter','B-Rank Hunter','A-Rank Hunter','S-Rank Hunter','Shadow Apprentice','Night Scout','Twilight Blade','Gate Guardian','Monster Slayer','Ritual Master','Discipline Caster','Chaos Conqueror','Raid Commander','Habit Architect','Focus Lord','Abyss Hunter','Shadow Captain','Dungeon Master','Energy Keeper','Night Strategist','Power Collector','Limit Breaker','Procrastination Slayer','Skill Lord','Raid Heart','Progress Ghost','Supreme Hunter','Shadow General','Quest Overlord','Evolution Master','Streak Lord','Discipline Titan','Raid King','Focus Archmage','Immortal Hunter','Abyss Judge','Radiant Monarch','Dark Strategist','Absolute Grinder','Mythic Hero','Level Overlord','System Legend','Willpower Sovereign','Super Rank','Progress Monarch','Living Legend'];
+const DIFF_XP={easy:10,medium:30,hard:50};
+const CHART_COLORS=['#7b2fff','#1a6fff','#00e5a0','#f0c040','#ff8040','#ff4060','#9d5cff','#4d94ff'];
+const STREAK_BONUSES=[{days:21,pct:10},{days:14,pct:7},{days:7,pct:5}];
+
+// ══════════════════════════════════════════════
+//  i18n
+// ══════════════════════════════════════════════
+const T={
+  ru:{
+    tagline:'Преврати цели в квесты, а рутину в игру',
+    sysTitle:'[ СИСТЕМНОЕ СООБЩЕНИЕ ]',
+    sysText:'Обнаружен новый охотник. Пройдите регистрацию для доступа к системе Growth Arc.',
+    nameLabel:'Имя охотника',
+    skillsLabel:'Навыки для развития',
+    namePh:'Введи своё имя...',
+    skillPh:'Название навыка...',
+    addSkill:'Свой навык',
+    addSkillM:'Новый навык',
+    enterBtn:'ВОЙТИ В СИСТЕМУ',
+    daytime:'Начало игрового дня',
+    createQuest:'СОЗДАТЬ КВЕСТ',
+    shareProgress:'ПОДЕЛИТЬСЯ ПРОГРЕССОМ',
+    skillsSec:'Навыки',
+    hunter:'Охотник',
+    quests:'Квесты',
+    journal:'Журнал',
+    system:'Система',
+    xpLabel:'Опыт',
+    questsStat:'Квестов',
+    levelStat:'Уровень',
+    xpStat:'XP',
+    setLangT:'ЯЗЫК / LANGUAGE',
+    setSkillsT:'НАВЫКИ',
+    setNotifT:'НАЧАЛО ИГРОВОГО ДНЯ',
+    setSysTxt:'Управляй навыками и параметрами охотника.',
+    saveTxt:'Сохранить',
+    newQuestTitle:'Новый квест',
+    editQuestTitle:'Редактировать квест',
+    questNameLbl:'Название квеста',
+    questNamePh:'Опиши задание...',
+    goalLbl:'Цель',
+    noGoal:'Без цели',
+    unitTimes:'раз',
+    unitMin:'минут',
+    unitPages:'страниц',
+    unitKm:'километров',
+    unitSets:'подходов',
+    unitCustom:'Своё...',
+    goalPh:'Свои единицы...',
+    skillSelLbl:'Навык',
+    diffLbl:'Уровень сложности',
+    diffEasy:'Лёгкий',
+    diffMedium:'Средний',
+    diffHard:'Высокий',
+    typeLbl:'Тип квеста',
+    typeOnce:'Разовый',
+    typeDaily:'Ежедневный',
+    typeWeekly:'Еженедельный',
+    typeMonthly:'Ежемесячный',
+    deadlineLbl:'Дедлайн',
+    noDeadline:'Без дедлайна',
+    setDate:'Установить дату',
+    timerLbl:'Отслеживать время',
+    timerOnLbl:'Таймер выполнения',
+    acceptQuest:'ПРИНЯТЬ КВЕСТ',
+    saveChanges:'СОХРАНИТЬ',
+    questDone:'[ КВЕСТ ВЫПОЛНЕН ]',
+    continueTxt:'ПРОДОЛЖИТЬ',
+    closeTxt:'Закрыть',
+    shareTxt:'Поделиться',
+    levelUp:'LEVEL UP',
+    skillRow:'Навык',
+    streakRow:'Стрик',
+    bonusRow:'Бонус стрика',
+    timeRow:'Время',
+    toNextRow:'До след. уровня',
+    streakSaved:'✓ Сохранён',
+    streakDays:'дней',
+    today:'Сегодня',
+    tomorrow:'Завтра',
+    days:'дн.',
+    overdue:'⚠ Просрочен',
+    complete:'ЗАВЕРШИТЬ КВЕСТ',
+    completeProgress:'ЗАВЕРШИТЬ',
+    presets:['🫀 Здоровье','💪 Физическая форма','💰 Деньги','🚀 Карьера'],
+    presetVals:['Здоровье','Физическая форма','Деньги','Карьера'],
+    chartByTime:'По времени',
+    logEmpty:'Журнал пуст.',
+    questEmpty:'Активных квестов нет.\nСоздай первый на вкладке Охотник.',
+    newSkillPh:'Новый навык...',
+    renameErr:'Название не может быть пустым',
+    inUseErr:'Нельзя удалить — навык используется в квестах',
+    existsErr:'Уже существует',
+    timeSaved:'✓ Время сохранено',
+    deleted:'Квест удалён',
+    timerStart:'▶ Старт',
+    timerPause:'⏸ Пауза',
+    timerReset:'↺ Сброс',
+    shareBotNote:'@GrowthArcBot',
+    typeLblMap:{once:'Разовый',daily:'Ежедневный',weekly:'Еженедельный',monthly:'Ежемесячный'},
+  },
+  en:{
+    tagline:'Turn goals into quests, routine into a game',
+    sysTitle:'[ SYSTEM MESSAGE ]',
+    sysText:'New hunter detected. Complete registration to access Growth Arc.',
+    nameLabel:'Hunter name',
+    skillsLabel:'Skills to develop',
+    namePh:'Enter your name...',
+    skillPh:'Skill name...',
+    addSkill:'Custom skill',
+    addSkillM:'New skill',
+    enterBtn:'ENTER SYSTEM',
+    daytime:'Game day start',
+    createQuest:'CREATE QUEST',
+    shareProgress:'SHARE PROGRESS',
+    skillsSec:'Skills',
+    hunter:'Hunter',
+    quests:'Quests',
+    journal:'Log',
+    system:'System',
+    xpLabel:'Experience',
+    questsStat:'Quests',
+    levelStat:'Level',
+    xpStat:'XP',
+    setLangT:'LANGUAGE',
+    setSkillsT:'SKILLS',
+    setNotifT:'GAME DAY START',
+    setSysTxt:'Manage your skills and hunter settings.',
+    saveTxt:'Save',
+    newQuestTitle:'New Quest',
+    editQuestTitle:'Edit Quest',
+    questNameLbl:'Quest name',
+    questNamePh:'Describe the task...',
+    goalLbl:'Goal',
+    noGoal:'No goal',
+    unitTimes:'times',
+    unitMin:'minutes',
+    unitPages:'pages',
+    unitKm:'kilometers',
+    unitSets:'sets',
+    unitCustom:'Custom...',
+    goalPh:'Custom unit...',
+    skillSelLbl:'Skill',
+    diffLbl:'Difficulty level',
+    diffEasy:'Easy',
+    diffMedium:'Medium',
+    diffHard:'Hard',
+    typeLbl:'Quest type',
+    typeOnce:'One-time',
+    typeDaily:'Daily',
+    typeWeekly:'Weekly',
+    typeMonthly:'Monthly',
+    deadlineLbl:'Deadline',
+    noDeadline:'No deadline',
+    setDate:'Set date',
+    timerLbl:'Track time',
+    timerOnLbl:'Completion timer',
+    acceptQuest:'ACCEPT QUEST',
+    saveChanges:'SAVE CHANGES',
+    questDone:'[ QUEST COMPLETE ]',
+    continueTxt:'CONTINUE',
+    closeTxt:'Close',
+    shareTxt:'Share',
+    levelUp:'LEVEL UP',
+    skillRow:'Skill',
+    streakRow:'Streak',
+    bonusRow:'Streak bonus',
+    timeRow:'Time',
+    toNextRow:'XP to next level',
+    streakSaved:'✓ Saved today',
+    streakDays:'days',
+    today:'Today',
+    tomorrow:'Tomorrow',
+    days:'d.',
+    overdue:'⚠ Overdue',
+    complete:'COMPLETE QUEST',
+    completeProgress:'COMPLETE',
+    presets:['🫀 Health','💪 Fitness','💰 Money','🚀 Career'],
+    presetVals:['Health','Fitness','Money','Career'],
+    chartByTime:'By time',
+    logEmpty:'Log is empty.',
+    questEmpty:'No active quests.\nCreate one on the Hunter tab.',
+    newSkillPh:'New skill...',
+    renameErr:"Name can't be empty",
+    inUseErr:"Can't delete — skill is used in quests",
+    existsErr:'Already exists',
+    timeSaved:'✓ Time saved',
+    deleted:'Quest deleted',
+    timerStart:'▶ Start',
+    timerPause:'⏸ Pause',
+    timerReset:'↺ Reset',
+    shareBotNote:'@GrowthArcBot',
+    typeLblMap:{once:'One-time',daily:'Daily',weekly:'Weekly',monthly:'Monthly'},
+  }
+};
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let S={name:'',tgAvatar:'',tgUserId:'',lang:'ru',level:0,xp:0,xpToNext:100,totalXp:0,questsDone:0,streak:0,streakSavedToday:false,lastQuestDate:'',lastGameDay:'',dayStartHour:6,dayStartMin:0,skills:[],quests:[],log:[]};
+let tgAvatarUrl='',chartMode='xp';
+function load(){const d=localStorage.getItem('growtharc_v3');if(d)try{S={...S,...JSON.parse(d)};}catch(e){}}
+function save(){localStorage.setItem('growtharc_v3',JSON.stringify(S));}
+const t=()=>T[S.lang]||T.ru;
+
+// ══════════════════════════════════════════════
+//  LANG
+// ══════════════════════════════════════════════
+function setLang(l){
+  S.lang=l;
+  ['lang-ru','lang-en','set-lang-ru','set-lang-en'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('sel');});
+  ['lang-'+l,'set-lang-'+l].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.add('sel');});
+  applyLang();
+}
+
+function applyLang(){
+  const tx=t();
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  const ph=(id,v)=>{const e=document.getElementById(id);if(e)e.placeholder=v;};
+  // Onboarding
+  set('ob-tagline',tx.tagline);
+  set('ob-sys-title',tx.sysTitle);
+  set('ob-sys-text',tx.sysText);
+  set('lbl-name',tx.nameLabel);
+  ph('ob-name',tx.namePh);
+  ph('ob-skill-inp',tx.skillPh);
+  set('lbl-add-skill',tx.addSkill);
+  set('lbl-enter',tx.enterBtn);
+  set('lbl-daytime',tx.daytime);
+  // Preset chips
+  document.querySelectorAll('#ob-skills-wrap .chip[data-ru]').forEach(c=>{
+    const lbl=c.querySelector('.chip-label');
+    if(lbl) lbl.textContent=S.lang==='en'?c.dataset.en:c.dataset.ru;
+  });
+  // App
+  set('lbl-cq',tx.createQuest);
+  set('lbl-share',tx.shareProgress);
+  set('lbl-skills-sec',tx.skillsSec);
+  set('nav-lbl-char',tx.hunter);
+  set('nav-lbl-quests',tx.quests);
+  set('nav-lbl-log',tx.journal);
+  set('nav-lbl-set',tx.system);
+  set('lbl-xp',tx.xpLabel);
+  set('sl-quests',tx.questsStat);
+  set('sl-level',tx.levelStat);
+  set('sl-xp',tx.xpStat);
+  // Settings
+  set('set-lang-t',tx.setLangT);
+  set('set-skills-t',tx.setSkillsT);
+  set('set-notif-t',tx.setNotifT);
+  set('set-sys-t',tx.sysTitle);
+  set('set-sys-txt',tx.setSysTxt);
+  set('btn-save-time',tx.saveTxt);
+  ph('new-skill-inp',tx.newSkillPh);
+  // Modal
+  set('lbl-qtitle',tx.questNameLbl);
+  ph('q-title',tx.questNamePh);
+  set('lbl-goal',tx.goalLbl);
+  set('opt-nogoal',tx.noGoal);
+  set('opt-times',tx.unitTimes);
+  set('opt-min',tx.unitMin);
+  set('opt-pages',tx.unitPages);
+  set('opt-km',tx.unitKm);
+  set('opt-sets',tx.unitSets);
+  set('opt-custom',tx.unitCustom);
+  ph('q-goal-custom',tx.goalPh);
+  set('lbl-skill-sel',tx.skillSelLbl);
+  set('lbl-add-skill-m',tx.addSkillM);
+  set('lbl-diff',tx.diffLbl);
+  set('diff-easy',tx.diffEasy);
+  set('diff-medium',tx.diffMedium);
+  set('diff-hard',tx.diffHard);
+  set('lbl-type',tx.typeLbl);
+  set('type-once',tx.typeOnce);
+  set('type-daily',tx.typeDaily);
+  set('type-weekly',tx.typeWeekly);
+  set('type-monthly',tx.typeMonthly);
+  set('lbl-deadline',tx.deadlineLbl);
+  set('opt-nodeadline',tx.noDeadline);
+  set('opt-setdate',tx.setDate);
+  set('lbl-timer-lbl',tx.timerLbl);
+  set('lbl-timer-on',tx.timerOnLbl);
+  set('btn-submit-txt',editingQuestId?tx.saveChanges:tx.acceptQuest);
+  set('res-sys-title',tx.questDone);
+  set('res-continue-btn',tx.continueTxt);
+  set('lbl-close',tx.closeTxt);
+  set('lbl-share-btn',tx.shareTxt);
+  set('lu-lbl-txt',tx.levelUp);
+  set('lu-continue-btn',tx.continueTxt);
+  set('lbl-lang','Язык / Language');
+  set('lbl-skills',tx.skillsLabel);
+  // chart toggle
+  const ctb=document.getElementById('chart-time-btn');if(ctb)ctb.textContent=tx.chartByTime;
+}
+
+// ══════════════════════════════════════════════
+//  TOOLTIPS
+// ══════════════════════════════════════════════
+const TIPS={
+  daytime:{ru:'Время когда начинается новый игровой день. Ежедневные квесты сбрасываются и проверяется стрик.',en:'Time when a new game day starts. Daily quests reset and streak is checked.'},
+  diff:{ru:'Лёгкий +10 XP, Средний +30 XP, Высокий +50 XP. Стрик умножает XP.',en:'Easy +10 XP, Medium +30 XP, Hard +50 XP. Streak multiplies XP.'},
+  type:{ru:'Разовый — один раз. Ежедневный — каждый день. Еженедельный / ежемесячный — по периоду.',en:'One-time: once. Daily: every game day. Weekly/Monthly: per period.'},
+  deadline:{ru:'Если дедлайн пропущен — карточка подсветится красным.',en:'If deadline is missed, the card glows red.'},
+  timer:{ru:'Таймер считает сколько времени ты тратишь на квест. Сохраняется в Журнале.',en:'Timer tracks how long you work on the quest. Saved in the Log.'},
+  goal:{ru:'Задай числовую цель: например 100 раз. Ползунок будет показывать 0–100 в единицах цели.',en:'Set a numeric goal, e.g. 100 reps. Slider shows progress in those units.'},
+  streak:{ru:'Стрик — дней подряд с выполненным хотя бы 1 квестом. Даёт бонус XP.',en:'Streak — consecutive days with at least 1 completed quest. Gives XP bonus.'},
+  xp:{ru:'XP — очки опыта для повышения уровня персонажа.',en:'XP — experience points to level up your character.'},
+};
+function showInfo(key,event){
+  event.stopPropagation();
+  const popup=document.getElementById('info-popup');
+  popup.textContent=(TIPS[key]&&TIPS[key][S.lang])||'';
+  const rect=event.target.getBoundingClientRect();
+  popup.style.left=Math.min(rect.left,window.innerWidth-270)+'px';
+  popup.style.top=(rect.bottom+6)+'px';
+  popup.classList.add('show');
+  setTimeout(()=>popup.classList.remove('show'),3500);
+}
+document.addEventListener('click',()=>document.getElementById('info-popup').classList.remove('show'));
+
+// ══════════════════════════════════════════════
+//  ONBOARDING
+// ══════════════════════════════════════════════
+let obPresets=[],obCustom=[],obSkillInpVis=false;
+document.getElementById('ob-name').addEventListener('input',checkObReady);
+
+function togglePreset(el){
+  const key=S.lang==='en'?el.dataset.en:el.dataset.ru;
+  el.classList.toggle('sel');
+  if(el.classList.contains('sel')) obPresets.push(key);
+  else obPresets=obPresets.filter(x=>x!==key);
+  checkObReady();
+}
+function showObSkillInp(){
+  obSkillInpVis=!obSkillInpVis;
+  document.getElementById('ob-skill-inp-row').style.display=obSkillInpVis?'flex':'none';
+  if(obSkillInpVis)document.getElementById('ob-skill-inp').focus();
+}
+function addObCustomSkill(){
+  const v=document.getElementById('ob-skill-inp').value.trim();if(!v)return;
+  if(!obCustom.includes(v)){obCustom.push(v);renderObCustomChips();}
+  document.getElementById('ob-skill-inp').value='';
+  document.getElementById('ob-skill-inp-row').style.display='none';obSkillInpVis=false;checkObReady();
+}
+document.getElementById('ob-skill-inp').addEventListener('keydown',e=>{if(e.key==='Enter')addObCustomSkill();});
+function renderObCustomChips(){
+  document.getElementById('ob-skills-wrap').querySelectorAll('.chip-custom').forEach(c=>c.remove());
+  const addBtn=document.getElementById('ob-chip-add');
+  obCustom.forEach(s=>{
+    const c=document.createElement('div');c.className='chip sel chip-custom';c.textContent=s+' ✕';
+    c.onclick=()=>{obCustom=obCustom.filter(x=>x!==s);c.remove();checkObReady();};
+    document.getElementById('ob-skills-wrap').insertBefore(c,addBtn);
+  });
+}
+function checkObReady(){
+  document.getElementById('ob-btn').disabled=!(document.getElementById('ob-name').value.trim()&&(obPresets.length+obCustom.length)>0);
+}
+function startGame(){
+  const name=document.getElementById('ob-name').value.trim();if(!name)return;
+  const all=[...obPresets,...obCustom];if(!all.length)return;
+  S.name=name;S.dayStartHour=parseInt(document.getElementById('ob-hour').value);S.dayStartMin=parseInt(document.getElementById('ob-min').value);
+  S.skills=all.map(s=>({name:s,xp:0,level:1}));
+  save();enterApp();
+}
+
+// ══════════════════════════════════════════════
+//  APP ENTRY
+// ══════════════════════════════════════════════
+function enterApp(){
+  document.getElementById('scr-ob').classList.remove('active');
+  document.getElementById('scr-app').classList.add('active');
+  document.getElementById('bnav').classList.add('show');
+  spawnParticles();checkDayReset();renderAll();applyLang();populateSetHour();
+}
+function spawnParticles(){
+  const l=document.querySelector('.bgl');
+  for(let i=0;i<18;i++){const p=document.createElement('div');p.className='bgp';p.style.left=Math.random()*100+'%';p.style.animationDuration=(8+Math.random()*15)+'s';p.style.animationDelay=(Math.random()*15)+'s';if(Math.random()>.6){p.style.background='var(--b3)';p.style.boxShadow='0 0 6px var(--b)';}l.appendChild(p);}
+}
+function populateSetHour(){
+  const sh=document.getElementById('set-hour');if(!sh||sh.options.length)return;
+  for(let h=0;h<24;h++)sh.innerHTML+=`<option value="${h}"${h===S.dayStartHour?' selected':''}>${String(h).padStart(2,'0')}</option>`;
+  document.getElementById('set-min').value=S.dayStartMin;
+}
+
+// ══════════════════════════════════════════════
+//  DAY LOGIC
+// ══════════════════════════════════════════════
+function getGameDay(){
+  const now=new Date(),start=new Date(now);
+  start.setHours(S.dayStartHour,S.dayStartMin,0,0);
+  if(now<start)start.setDate(start.getDate()-1);
+  return start.toDateString();
+}
+function checkDayReset(){
+  const today=getGameDay();
+  if(S.lastGameDay&&S.lastGameDay!==today){
+    if(!S.streakSavedToday)S.streak=0;
+    S.streakSavedToday=false;
+    resetPeriodQuests(today);
+  }
+  S.lastGameDay=today;save();
+}
+function resetPeriodQuests(today){
+  const now=new Date(today);
+  S.quests.forEach(q=>{
+    if(q.type==='daily'){q.progress=0;q.completedThisPeriod=false;}
+    if(q.type==='weekly'){const ld=q.lastCompletedDate?new Date(q.lastCompletedDate):null;if(ld&&(now-ld)/864e5>=7){q.progress=0;q.completedThisPeriod=false;}}
+    if(q.type==='monthly'){const ld=q.lastCompletedDate?new Date(q.lastCompletedDate):null;if(ld&&ld.getMonth()!==now.getMonth()){q.progress=0;q.completedThisPeriod=false;}}
+  });save();
+}
+
+// ══════════════════════════════════════════════
+//  RENDER ALL
+// ══════════════════════════════════════════════
+function renderAll(){renderChar();renderSkills();renderQuests();renderLog();renderTopbar();renderSkillsEdit();applyLang();}
+
+function renderTopbar(){
+  document.getElementById('tb-snum').textContent=S.streak;
+  document.getElementById('tb-lvl-txt').textContent=S.level;
+  document.getElementById('tb-sdot').className='sdot'+(S.streakSavedToday?'':' dead');
+}
+function renderChar(){
+  const tx=t();
+  document.getElementById('char-name').textContent=S.name;
+  const ri=Math.min(S.level,RANKS.length-1);
+  const rankArr=S.lang==='en'?RANKS_EN:RANKS;
+  document.getElementById('char-rank').textContent=rankArr[ri].toUpperCase();
+  const avEl=document.getElementById('char-av');
+  avEl.innerHTML=tgAvatarUrl?`<img src="${tgAvatarUrl}" alt="av"/>`:'⚔️';
+  const pct=Math.min(100,Math.round(S.xp/S.xpToNext*100));
+  document.getElementById('xp-fill').style.width=pct+'%';
+  document.getElementById('xp-num').textContent=S.xp+' / '+S.xpToNext+' XP';
+  document.getElementById('s-quests').textContent=S.questsDone;
+  document.getElementById('s-lvl').textContent=S.level;
+  document.getElementById('s-xp').textContent=S.totalXp;
+  renderTopbar();
+  const bonus=getStreakBonus();
+  let html='';
+  if(S.streak>=7)html+=`<span class="streak-badge">🔥 ${S.streak} ${tx.streakDays} — +${bonus}% XP</span>`;
+  if(S.streakSavedToday)html+=`<span class="streak-saved">✓ ${tx.streakSaved}</span>`;
+  document.getElementById('streak-info').innerHTML=html;
+}
+function renderSkills(){
+  document.getElementById('skills-list').innerHTML=S.skills.map(s=>{
+    const thr=s.level*80,pct=Math.min(100,Math.round(s.xp/thr*100));
+    return `<div class="skill-row"><div class="sk-name">${s.name}</div><div class="sk-bw"><div class="sk-bf" style="width:${pct}%"></div></div><div class="sk-xp">Ур.${s.level}·${s.xp}xp</div></div>`;
+  }).join('');
+}
+function renderQuests(){
+  const tx=t();
+  const list=document.getElementById('quest-list');
+  const active=S.quests.filter(q=>!q.completedThisPeriod);
+  if(!active.length){
+    list.innerHTML=`<div class="q-empty"><span class="q-empty-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g stroke="url(#grad-main)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 14.2 8l5.55.5-4.2 3.65 1.25 5.45L12 14.75 7.2 17.6l1.25-5.45L4.25 8.5 9.8 8 12 2.9Z"/></g></svg></span>${tx.questEmpty.replace('\n','<br>')}</div>`;
+    return;
+  }
+  const today=new Date();
+  list.innerHTML=active.map(q=>{
+    const xp=DIFF_XP[q.diff];
+    const pct=Math.round((q.progress||0)*100);
+    const canComplete=pct>=100;
+    // Goal label: if goalNum set, show actual value / goal
+    let progLabel='';
+    if(q.goalNum&&q.goalUnit){
+      const cur=Math.round((q.progress||0)*q.goalNum);
+      progLabel=`<div style="font-size:11px;color:var(--text3);text-align:right;margin-top:2px;">${cur} / ${q.goalNum} ${q.goalUnit}</div>`;
+    } else {
+      progLabel=`<div style="font-size:11px;color:var(--text3);text-align:right;margin-top:2px;">${pct}%</div>`;
+    }
+    let dlTag='',isOverdue=false;
+    if(q.deadlineDate){
+      const dl=new Date(q.deadlineDate);
+      const diff=Math.ceil((dl-today)/864e5);
+      if(diff<0){dlTag=`<span class="tag tag-overdue">${tx.overdue}</span>`;isOverdue=true;}
+      else if(diff===0)dlTag=`<span class="tag tag-dl">⏰ ${tx.today}</span>`;
+      else if(diff===1)dlTag=`<span class="tag tag-dl">⏰ ${tx.tomorrow}</span>`;
+      else dlTag=`<span class="tag tag-dl">⏰ ${diff} ${tx.days}</span>`;
+    }
+    const diffTagClass=q.diff==='easy'?'tag-easy':q.diff==='medium'?'tag-medium':'tag-hard';
+    const diffLbl=tx.typeLblMap?{easy:tx.diffEasy,medium:tx.diffMedium,hard:tx.diffHard}[q.diff]:q.diff;
+    const typeLbl=tx.typeLblMap[q.type]||q.type;
+    const completeBtnTxt=canComplete?tx.complete:`${tx.completeProgress} (${pct}%)`;
+    const timerHtml=q.timerEnabled?`
+      <div class="timer-block">
+        <div class="timer-hdr">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"><g stroke="url(#grad-main)" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 3.6h7"/><path d="M8.2 6.8v3.5c0 1.25.7 2.4 1.82 2.98L12 14.3l1.98-1.02A3.35 3.35 0 0 0 15.8 10.3V6.8"/><path d="M8.2 17.2v-3.5c0-1.25.7-2.4 1.82-2.98L12 9.7l1.98 1.02a3.35 3.35 0 0 1 1.82 2.98v3.5"/><path d="M6.7 17.2h10.6"/></g></svg>
+          <div class="timer-display" id="timer-${q.id}">${fmtTime(q.timeSpentSeconds||0)}</div>
+        </div>
+        <div class="timer-btns">
+          <button class="timer-btn start" id="tbtn-start-${q.id}" onclick="startTimer('${q.id}')">${tx.timerStart}</button>
+          <button class="timer-btn pause" id="tbtn-pause-${q.id}" onclick="pauseTimer('${q.id}')" style="display:none">${tx.timerPause}</button>
+          <button class="timer-btn reset" onclick="resetTimer('${q.id}')">${tx.timerReset}</button>
+        </div>
+      </div>`:'';
+    return `<div class="qcard${isOverdue?' overdue':''}" id="qcard-${q.id}">
+      <div class="qcard-hd">
+        <div class="qcard-title">${q.title}</div>
+        <div class="qcard-top-r">
+          <button class="btn-edit-q" onclick="openEdit('${q.id}')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"><g stroke="url(#grad-main)" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M4.2 17.85 5 20l2.15-.8L18.4 7.95l-2.95-2.95L4.2 17.85Z"/><path d="m14.65 5.8 2.95 2.95"/></g></svg>
+          </button>
+          <div class="xp-badge">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"><g stroke="#f0c040" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.9 18.2 7.15 15.85 20.2h-7.7L5.8 7.15 12 2.9Z"/><path d="M5.8 7.15h12.4"/></g></svg>
+            +${xp} XP
+          </div>
+        </div>
+      </div>
+      <div class="qcard-meta">
+        <span class="tag tag-skill">
+          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none"><g stroke="#9d5cff" stroke-width="1.65" stroke-linecap="round"><path d="M12 3.3 20.7 12 12 20.7 3.3 12 12 3.3Z"/></g></svg>
+          ${q.skill}
+        </span>
+        <span class="tag ${diffTagClass}">${diffLbl}</span>
+        <span class="tag tag-type">
+          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none"><g stroke="#4d94ff" stroke-width="1.65" stroke-linecap="round"><path d="M6.2 8.8a6 6 0 0 1 10.95-1.5"/><path d="M17.8 15.2a6 6 0 0 1-10.95 1.5"/></g></svg>
+          ${typeLbl}
+        </span>
+        ${dlTag}
+      </div>
+      <div class="prog-hdr"><span class="prog-lbl">${q.goalNum&&q.goalUnit?q.goalUnit:''}</span><span class="prog-val" id="pval-${q.id}">${q.goalNum&&q.goalUnit?Math.round((q.progress||0)*q.goalNum)+' / '+q.goalNum:pct+'%'}</span></div>
+      <div class="prog-wrap" id="pslider-${q.id}">
+        <div class="prog-track" id="ptrack-${q.id}">
+          <div class="prog-fill" style="width:${pct}%" id="pfill-${q.id}"></div>
+        </div>
+      </div>
+      ${timerHtml}
+      <div class="qcard-btns">
+        <button class="btn-complete" ${canComplete?'':'disabled'} onclick="completeQuest('${q.id}')" id="qbtn-${q.id}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"><g stroke="white" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="m5.1 12.35 4.2 4.2 9.6-9.6"/><path d="M4.2 12a7.8 7.8 0 1 0 15.6 0 7.8 7.8 0 0 0-15.6 0Z"/></g></svg>
+          ${completeBtnTxt}
+        </button>
+        <button class="btn-del" onclick="deleteQuest('${q.id}')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"><g stroke="url(#grad-main)" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M5.35 7.2h13.3"/><path d="M9.1 7.2V5.35c0-.8.65-1.45 1.45-1.45h2.9c.8 0 1.45.65 1.45 1.45V7.2"/><path d="m17.45 7.2-.85 12a1.65 1.65 0 0 1-1.65 1.55h-5.9A1.65 1.65 0 0 1 7.4 19.2l-.85-12"/><path d="M10.2 10.55v6.5"/><path d="M13.8 10.55v6.5"/></g></svg>
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+  active.forEach(q=>bindSlider(q.id));
+  active.filter(q=>q.timerStatus==='running').forEach(q=>resumeTimerUI(q.id));
+}
+
+function bindSlider(id){
+  const wrap=document.getElementById('pslider-'+id);
+  const track=document.getElementById('ptrack-'+id);
+  if(!wrap||!track)return;
+  const q=S.quests.find(x=>x.id===id);
+  let drag=false;
+  function setP(e){
+    const rect=track.getBoundingClientRect();
+    const cx=e.touches?e.touches[0].clientX:e.clientX;
+    const pct=Math.max(0,Math.min(1,(cx-rect.left)/rect.width));
+    if(!q)return;
+    q.progress=pct;
+    const p=Math.round(pct*100);
+    const fill=document.getElementById('pfill-'+id);if(fill)fill.style.width=p+'%';
+    const pval=document.getElementById('pval-'+id);
+    if(pval){
+      if(q.goalNum&&q.goalUnit) pval.textContent=Math.round(pct*q.goalNum)+' / '+q.goalNum;
+      else pval.textContent=p+'%';
+    }
+    const btn=document.getElementById('qbtn-'+id);
+    if(btn){
+      const tx=t();
+      btn.disabled=p<100;
+      const svgIcon=`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"><g stroke="white" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="m5.1 12.35 4.2 4.2 9.6-9.6"/><path d="M4.2 12a7.8 7.8 0 1 0 15.6 0 7.8 7.8 0 0 0-15.6 0Z"/></g></svg>`;
+      btn.innerHTML=svgIcon+(p>=100?tx.complete:`${tx.completeProgress} (${p}%)`);
+    }
+    save();
+  }
+  wrap.addEventListener('mousedown',e=>{drag=true;setP(e);});
+  wrap.addEventListener('touchstart',e=>{drag=true;setP(e);},{passive:true});
+  document.addEventListener('mousemove',e=>{if(drag)setP(e);});
+  document.addEventListener('touchmove',e=>{if(drag)setP(e);},{passive:true});
+  document.addEventListener('mouseup',()=>{drag=false;});
+  document.addEventListener('touchend',()=>{drag=false;});
+}
+
+function renderLog(){
+  const tx=t();
+  drawDonut();
+  const list=document.getElementById('log-list');
+  if(!S.log.length){list.innerHTML=`<div style="text-align:center;padding:2rem;color:var(--text3)">${tx.logEmpty}</div>`;return;}
+  list.innerHTML=[...S.log].reverse().map(l=>`
+    <div class="log-card">
+      <div class="log-ico"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"><g stroke="url(#grad-main)" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="m5.1 12.35 4.2 4.2 9.6-9.6"/></g></svg></div>
+      <div class="log-info">
+        <div class="log-title">${l.title}</div>
+        <div class="log-meta">${l.skill} · ${tx.typeLblMap[l.type]||l.type} · ${l.date}${l.timeStr?' · ⏱ '+l.timeStr:''}</div>
+      </div>
+      <div class="log-xp">+${l.xp} XP</div>
+    </div>`).join('');
+}
+
+function setChartMode(m){
+  chartMode=m;
+  document.getElementById('chart-by-xp').classList.toggle('active',m==='xp');
+  document.getElementById('chart-by-time').classList.toggle('active',m==='time');
+  drawDonut();
+}
+function drawDonut(){
+  const canvas=document.getElementById('donut-canvas');if(!canvas)return;
+  const ctx=canvas.getContext('2d');ctx.clearRect(0,0,160,160);
+  const map={};
+  S.log.forEach(l=>{
+    const key=l.skill||'—';
+    map[key]=(map[key]||0)+(chartMode==='xp'?l.xp:(l.timeSec||0));
+  });
+  const entries=Object.entries(map).filter(([,v])=>v>0);
+  if(!entries.length){ctx.fillStyle='#1a2035';ctx.beginPath();ctx.arc(80,80,60,0,Math.PI*2);ctx.fill();document.getElementById('donut-legend').innerHTML='';return;}
+  const total=entries.reduce((s,[,v])=>s+v,0);
+  let ang=-Math.PI/2;
+  const legend=document.getElementById('donut-legend');legend.innerHTML='';
+  entries.forEach(([name,val],i)=>{
+    const slice=(val/total)*Math.PI*2;const color=CHART_COLORS[i%CHART_COLORS.length];
+    ctx.beginPath();ctx.moveTo(80,80);ctx.arc(80,80,70,ang,ang+slice);ctx.closePath();
+    ctx.fillStyle=color;ctx.fill();
+    ctx.beginPath();ctx.arc(80,80,42,0,Math.PI*2);ctx.fillStyle='#05060a';ctx.fill();
+    ang+=slice;
+    const pct=Math.round(val/total*100);
+    legend.innerHTML+=`<div class="legend-row"><span class="legend-dot" style="background:${color}"></span><span class="legend-name">${name}</span><span class="legend-pct">${pct}%</span></div>`;
+  });
+}
+
+function renderSkillsEdit(){
+  const tx=t();
+  const list=document.getElementById('skills-edit-list');if(!list)return;
+  list.innerHTML=S.skills.map((s,i)=>`
+    <div class="sk-edit-row" id="ser-${i}">
+      <div class="sk-edit-name" id="sen-${i}">${s.name}</div>
+      <button class="btn-ic e" onclick="editSkill(${i})">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"><g stroke="url(#grad-main)" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M4.2 17.85 5 20l2.15-.8L18.4 7.95l-2.95-2.95L4.2 17.85Z"/><path d="m14.65 5.8 2.95 2.95"/></g></svg>
+      </button>
+      <button class="btn-ic d" onclick="delSkill(${i})">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"><g stroke="url(#grad-main)" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M5.35 7.2h13.3"/><path d="M9.1 7.2V5.35c0-.8.65-1.45 1.45-1.45h2.9c.8 0 1.45.65 1.45 1.45V7.2"/><path d="m17.45 7.2-.85 12a1.65 1.65 0 0 1-1.65 1.55h-5.9A1.65 1.65 0 0 1 7.4 19.2l-.85-12"/></g></svg>
+      </button>
+    </div>`).join('');
+}
+function editSkill(i){
+  const row=document.getElementById('ser-'+i);
+  const nameEl=document.getElementById('sen-'+i);
+  const inp=document.createElement('input');inp.className='sk-edit-inp';inp.value=S.skills[i].name;inp.maxLength=24;
+  nameEl.style.display='none';row.insertBefore(inp,row.querySelector('.btn-ic.e'));
+  const saveBtn=row.querySelector('.btn-ic.e');saveBtn.innerHTML='✅';saveBtn.className='btn-ic s';
+  saveBtn.onclick=()=>saveEditSkill(i,inp.value);
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter')saveEditSkill(i,inp.value);});inp.focus();
+}
+function saveEditSkill(i,val){
+  const v=val.trim();if(!v){showToast(t().renameErr);return;}
+  const old=S.skills[i].name;S.skills[i].name=v;
+  S.quests.forEach(q=>{if(q.skill===old)q.skill=v;});
+  S.log.forEach(l=>{if(l.skill===old)l.skill=v;});
+  save();renderAll();
+}
+function delSkill(i){
+  if(S.quests.some(q=>q.skill===S.skills[i].name)){showToast(t().inUseErr);return;}
+  S.skills.splice(i,1);save();renderAll();
+}
+function addNewSkill(){
+  const v=document.getElementById('new-skill-inp').value.trim();if(!v)return;
+  if(S.skills.find(s=>s.name===v)){showToast(t().existsErr);return;}
+  S.skills.push({name:v,xp:0,level:1});document.getElementById('new-skill-inp').value='';save();renderAll();
+}
+function saveTimeSettings(){
+  S.dayStartHour=parseInt(document.getElementById('set-hour').value);
+  S.dayStartMin=parseInt(document.getElementById('set-min').value);
+  save();showToast(t().timeSaved);
+}
+
+// ══════════════════════════════════════════════
+//  MODAL
+// ══════════════════════════════════════════════
+let qDiff=null,qSkill=null,qType=null,mSkillInpVis=false,editingQuestId=null;
+function openCreate(){
+  editingQuestId=null;qDiff=null;qSkill=null;qType=null;
+  resetModalForm();
+  document.getElementById('modal-title-text').textContent=t().newQuestTitle;
+  document.getElementById('btn-submit-txt').textContent=t().acceptQuest;
+  document.getElementById('modal-ov').classList.add('open');
+  setTimeout(()=>document.getElementById('q-title').focus(),300);
+}
+function openEdit(id){
+  const q=S.quests.find(x=>x.id===id);if(!q)return;
+  editingQuestId=id;qDiff=q.diff;qSkill=q.skill;qType=q.type;
+  resetModalForm();
+  document.getElementById('modal-title-text').textContent=t().editQuestTitle;
+  document.getElementById('btn-submit-txt').textContent=t().saveChanges;
+  document.getElementById('q-title').value=q.title;
+  if(q.goalNum) document.getElementById('q-goal-num').value=q.goalNum;
+  if(q.goalUnit){
+    const sel=document.getElementById('q-goal-unit');
+    const exists=[...sel.options].some(o=>o.value===q.goalUnit);
+    if(exists) sel.value=q.goalUnit;
+    else{sel.value='custom';document.getElementById('q-goal-custom').style.display='block';document.getElementById('q-goal-custom').value=q.goalUnit;}
+  }
+  if(q.deadlineDate){document.getElementById('q-dl-type').value='date';document.getElementById('q-dl-date').style.display='block';document.getElementById('q-dl-date').value=q.deadlineDate;}
+  document.getElementById('q-timer').checked=q.timerEnabled||false;
+  document.querySelectorAll('.diff-btn').forEach(b=>b.classList.toggle('sel',b.dataset.d===qDiff));
+  document.querySelectorAll('.type-btn').forEach(b=>b.classList.toggle('sel',b.dataset.t===qType));
+  renderModalSkills();document.getElementById('modal-ov').classList.add('open');checkSubmit();
+}
+function resetModalForm(){
+  document.getElementById('q-title').value='';
+  document.getElementById('q-goal-num').value='';
+  document.getElementById('q-goal-unit').value='';
+  document.getElementById('q-goal-custom').style.display='none';document.getElementById('q-goal-custom').value='';
+  document.getElementById('q-dl-type').value='none';document.getElementById('q-dl-date').style.display='none';document.getElementById('q-dl-date').value='';
+  document.getElementById('q-timer').checked=false;
+  document.getElementById('q-skill-inp-row').style.display='none';mSkillInpVis=false;
+  document.getElementById('btn-submit').disabled=true;
+  document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('sel'));
+  document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('sel'));
+  renderModalSkills();
+}
+function closeModal(){document.getElementById('modal-ov').classList.remove('open');}
+function closeModalOut(e){if(e.target===document.getElementById('modal-ov'))closeModal();}
+function renderModalSkills(){
+  document.getElementById('q-skill-wrap').innerHTML=S.skills.map(s=>`<div class="chip ${qSkill===s.name?'sel':''}" onclick="selSkill('${s.name}')">${s.name}</div>`).join('');
+}
+function selSkill(n){qSkill=n;renderModalSkills();checkSubmit();}
+function showModalSkillInp(){mSkillInpVis=!mSkillInpVis;document.getElementById('q-skill-inp-row').style.display=mSkillInpVis?'flex':'none';if(mSkillInpVis)document.getElementById('q-skill-inp').focus();}
+function addModalSkill(){
+  const v=document.getElementById('q-skill-inp').value.trim();if(!v)return;
+  if(!S.skills.find(s=>s.name===v))S.skills.push({name:v,xp:0,level:1});
+  qSkill=v;save();document.getElementById('q-skill-inp').value='';document.getElementById('q-skill-inp-row').style.display='none';mSkillInpVis=false;
+  renderModalSkills();renderSkills();renderSkillsEdit();checkSubmit();
+}
+document.getElementById('q-skill-inp').addEventListener('keydown',e=>{if(e.key==='Enter')addModalSkill();});
+function selDiff(d){qDiff=d;document.querySelectorAll('.diff-btn').forEach(b=>b.classList.toggle('sel',b.dataset.d===d));checkSubmit();}
+function selType(tp){qType=tp;document.querySelectorAll('.type-btn').forEach(b=>b.classList.toggle('sel',b.dataset.t===tp));checkSubmit();}
+function updateDlUI(){document.getElementById('q-dl-date').style.display=document.getElementById('q-dl-type').value==='date'?'block':'none';}
+function onUnitChange(){document.getElementById('q-goal-custom').style.display=document.getElementById('q-goal-unit').value==='custom'?'block':'none';}
+document.getElementById('q-title').addEventListener('input',checkSubmit);
+function checkSubmit(){document.getElementById('btn-submit').disabled=!(document.getElementById('q-title').value.trim()&&qSkill&&qDiff&&qType);}
+function submitQuest(){
+  const title=document.getElementById('q-title').value.trim();if(!title||!qSkill||!qDiff||!qType)return;
+  let goalUnit=document.getElementById('q-goal-unit').value;
+  if(goalUnit==='custom') goalUnit=document.getElementById('q-goal-custom').value.trim();
+  if(goalUnit==='') goalUnit='';
+  const goalNum=goalUnit?parseInt(document.getElementById('q-goal-num').value)||0:0;
+  let dl='';
+  if(document.getElementById('q-dl-type').value==='date') dl=document.getElementById('q-dl-date').value||'';
+  const timerEnabled=document.getElementById('q-timer').checked;
+  if(editingQuestId){
+    const q=S.quests.find(x=>x.id===editingQuestId);
+    if(q) Object.assign(q,{title,skill:qSkill,diff:qDiff,type:qType,deadlineDate:dl,goalNum,goalUnit,timerEnabled});
+  } else {
+    S.quests.push({id:Date.now().toString(),title,skill:qSkill,diff:qDiff,type:qType,progress:0,deadlineDate:dl,goalNum,goalUnit,timerEnabled,timeSpentSeconds:0,timerStatus:'idle',timerStartedAt:null,completedThisPeriod:false,lastCompletedDate:'',createdAt:new Date().toLocaleDateString()});
+  }
+  save();closeModal();switchTab('quests');renderAll();
+}
+
+// ══════════════════════════════════════════════
+//  QUEST COMPLETE
+// ══════════════════════════════════════════════
+function getStreakBonus(){for(const b of STREAK_BONUSES){if(S.streak>=b.days)return b.pct;}return 0;}
+function completeQuest(id){
+  const q=S.quests.find(x=>x.id===id);if(!q||q.progress<1)return;
+  if(q.timerStatus==='running')pauseTimer(id);
+  const baseXp=DIFF_XP[q.diff],bonus=getStreakBonus(),earned=Math.round(baseXp*(1+bonus/100));
+  const timeStr=q.timeSpentSeconds>0?fmtTime(q.timeSpentSeconds):'';
+  const card=document.getElementById('qcard-'+id);
+  if(card){card.style.transition='all .4s ease';card.style.borderColor='rgba(123,47,255,.9)';card.style.boxShadow='0 0 40px rgba(123,47,255,.5)';card.style.transform='scale(1.02)';setTimeout(()=>{card.style.opacity='0';card.style.transform='scale(.95)';},400);}
+  setTimeout(()=>{
+    gainXp(earned,q.skill);updateStreak();
+    const today=new Date().toLocaleDateString();
+    S.log.push({id:Date.now(),title:q.title,skill:q.skill,diff:q.diff,type:q.type,xp:earned,date:today,timeStr,timeSec:q.timeSpentSeconds||0});
+    S.questsDone++;
+    if(q.type==='once') S.quests=S.quests.filter(x=>x.id!==id);
+    else{q.progress=0;q.completedThisPeriod=true;q.lastCompletedDate=new Date().toDateString();q.timeSpentSeconds=0;q.timerStatus='idle';}
+    save();renderAll();showResult(q,earned,bonus,timeStr);showXpFly('+'+earned+' XP',card);
+  },700);
+}
+function deleteQuest(id){S.quests=S.quests.filter(q=>q.id!==id);save();renderQuests();showToast(t().deleted);}
+function updateStreak(){
+  const today=getGameDay();
+  if(!S.streakSavedToday){
+    const prev=S.lastQuestDate;
+    if(prev){const pd=new Date(prev),td=new Date(today),diff=(td-pd)/864e5;S.streak=Math.abs(diff)<=1?S.streak+1:1;}
+    else S.streak=1;
+    S.streakSavedToday=true;S.lastQuestDate=today;save();
+  }
+}
+
+// ══════════════════════════════════════════════
+//  TIMER
+// ══════════════════════════════════════════════
+const timerIntervals={};
+function fmtTime(sec){const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;}
+function startTimer(id){
+  const q=S.quests.find(x=>x.id===id);if(!q)return;
+  q.timerStatus='running';q.timerStartedAt=Date.now();save();
+  document.getElementById('tbtn-start-'+id).style.display='none';
+  document.getElementById('tbtn-pause-'+id).style.display='flex';
+  timerIntervals[id]=setInterval(()=>{const q=S.quests.find(x=>x.id===id);if(!q)return;q.timeSpentSeconds=(q.timeSpentSeconds||0)+1;const d=document.getElementById('timer-'+id);if(d)d.textContent=fmtTime(q.timeSpentSeconds);},1000);
+}
+function pauseTimer(id){
+  const q=S.quests.find(x=>x.id===id);if(!q)return;
+  clearInterval(timerIntervals[id]);q.timerStatus='paused';save();
+  const ps=document.getElementById('tbtn-pause-'+id);if(ps)ps.style.display='none';
+  const st=document.getElementById('tbtn-start-'+id);if(st)st.style.display='flex';
+}
+function resetTimer(id){
+  clearInterval(timerIntervals[id]);
+  const q=S.quests.find(x=>x.id===id);if(!q)return;
+  q.timerStatus='idle';q.timeSpentSeconds=0;q.timerStartedAt=null;save();
+  const d=document.getElementById('timer-'+id);if(d)d.textContent='00:00:00';
+  const ps=document.getElementById('tbtn-pause-'+id);if(ps)ps.style.display='none';
+  const st=document.getElementById('tbtn-start-'+id);if(st)st.style.display='flex';
+}
+function resumeTimerUI(id){
+  const st=document.getElementById('tbtn-start-'+id);if(st)st.style.display='none';
+  const ps=document.getElementById('tbtn-pause-'+id);if(ps)ps.style.display='flex';
+  timerIntervals[id]=setInterval(()=>{const q=S.quests.find(x=>x.id===id);if(!q)return;q.timeSpentSeconds=(q.timeSpentSeconds||0)+1;const d=document.getElementById('timer-'+id);if(d)d.textContent=fmtTime(q.timeSpentSeconds);},1000);
+}
+
+// ══════════════════════════════════════════════
+//  XP + LEVELS
+// ══════════════════════════════════════════════
+function gainXp(amount,skillName){
+  S.xp+=amount;S.totalXp+=amount;
+  const skill=S.skills.find(s=>s.name===skillName);
+  if(skill){skill.xp+=amount;if(skill.xp>=skill.level*80){skill.level++;showToast('📈 '+skillName+' — '+skill.level+'!');}}
+  while(S.xp>=S.xpToNext){S.xp-=S.xpToNext;S.level++;S.xpToNext=Math.round(S.xpToNext*1.35);setTimeout(()=>showLevelUp(),800);}
+  save();
+}
+
+// ══════════════════════════════════════════════
+//  RESULT
+// ══════════════════════════════════════════════
+function showResult(q,earned,bonus,timeStr){
+  const tx=t();
+  document.getElementById('res-sys-title').textContent=tx.questDone;
+  document.getElementById('res-quest-title').textContent=q.title;
+  document.getElementById('res-xp').textContent='+'+earned+' XP';
+  const toNext=S.xpToNext-S.xp;
+  let rows=`<div class="res-row"><span class="res-row-l">${tx.skillRow}</span><span class="res-row-v">${q.skill} +${earned} XP</span></div>`;
+  rows+=`<div class="res-row"><span class="res-row-l">${tx.streakRow}</span><span class="res-row-v ${S.streakSavedToday?'g':''}">${S.streakSavedToday?tx.streakSaved:'—'}</span></div>`;
+  if(bonus>0)rows+=`<div class="res-row"><span class="res-row-l">${tx.bonusRow}</span><span class="res-row-v gold">+${bonus}%</span></div>`;
+  if(timeStr)rows+=`<div class="res-row"><span class="res-row-l">${tx.timeRow}</span><span class="res-row-v">⏱ ${timeStr}</span></div>`;
+  rows+=`<div class="res-row"><span class="res-row-l">${tx.toNextRow}</span><span class="res-row-v">${toNext} XP</span></div>`;
+  document.getElementById('res-rows').innerHTML=rows;
+  document.getElementById('res-continue-btn').textContent=tx.continueTxt;
+  document.getElementById('result-ov').classList.add('show');
+}
+function closeResult(){document.getElementById('result-ov').classList.remove('show');}
+
+// ══════════════════════════════════════════════
+//  LEVEL UP
+// ══════════════════════════════════════════════
+function showLevelUp(){
+  const rankArr=S.lang==='en'?RANKS_EN:RANKS;
+  document.getElementById('lu-num').textContent=S.level;
+  document.getElementById('lu-rank').textContent=rankArr[Math.min(S.level,rankArr.length-1)];
+  document.getElementById('lu-ov').classList.add('show');
+}
+function closeLU(){document.getElementById('lu-ov').classList.remove('show');renderAll();}
+
+// ══════════════════════════════════════════════
+//  SHARE — canvas card
+// ══════════════════════════════════════════════
+function openShare(){
+  drawShareCard();
+  document.getElementById('share-ov').classList.add('show');
+}
+function closeShare(){document.getElementById('share-ov').classList.remove('show');}
+function closeShareOut(e){if(e.target===document.getElementById('share-ov'))closeShare();}
+
+function drawShareCard(){
+  const canvas=document.getElementById('share-canvas');
+  const ctx=canvas.getContext('2d');
+  const W=540,H=675;
+  canvas.width=W;canvas.height=H;
+
+  // Background
+  ctx.fillStyle='#05060a';ctx.fillRect(0,0,W,H);
+  // Purple glow top
+  const grd=ctx.createRadialGradient(W/2,0,0,W/2,0,H*0.7);
+  grd.addColorStop(0,'rgba(123,47,255,0.2)');grd.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=grd;ctx.fillRect(0,0,W,H);
+  // Bottom blue glow
+  const grd2=ctx.createRadialGradient(W,H,0,W,H,H*0.6);
+  grd2.addColorStop(0,'rgba(26,111,255,0.12)');grd2.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=grd2;ctx.fillRect(0,0,W,H);
+  // Grid lines
+  ctx.strokeStyle='rgba(123,47,255,0.06)';ctx.lineWidth=1;
+  for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  // Border
+  ctx.strokeStyle='rgba(123,47,255,0.5)';ctx.lineWidth=1.5;roundRect(ctx,16,16,W-32,H-32,16);ctx.stroke();
+  // Logo
+  ctx.font='900 22px Orbitron,monospace';
+  const lg=ctx.createLinearGradient(0,0,W,0);lg.addColorStop(0,'#9d5cff');lg.addColorStop(1,'#4d94ff');
+  ctx.fillStyle=lg;ctx.textAlign='center';ctx.fillText('GROWTH ARC',W/2,58);
+  ctx.font='500 13px Rajdhani,sans-serif';ctx.fillStyle='rgba(255,255,255,0.3)';ctx.fillText('SYSTEM',W/2,78);
+  // Avatar circle
+  const cx=W/2,cy=160,r=56;
+  ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.clip();
+  if(tgAvatarUrl){try{const img=document.querySelector('#char-av img');if(img)ctx.drawImage(img,cx-r,cy-r,r*2,r*2);else drawDefaultAvatar(ctx,cx,cy,r);}catch{drawDefaultAvatar(ctx,cx,cy,r);}}
+  else drawDefaultAvatar(ctx,cx,cy,r);
+  ctx.restore();
+  // Avatar ring
+  const ring=ctx.createLinearGradient(cx-r,cy-r,cx+r,cy+r);ring.addColorStop(0,'#9d5cff');ring.addColorStop(1,'#4d94ff');
+  ctx.strokeStyle=ring;ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(cx,cy,r+2,0,Math.PI*2);ctx.stroke();
+  // Name
+  ctx.font='700 26px Cinzel,serif';ctx.fillStyle='#e8ecf8';ctx.textAlign='center';ctx.fillText(S.name,W/2,248);
+  // Rank
+  const rankArr=S.lang==='en'?RANKS_EN:RANKS;
+  const rankTxt=rankArr[Math.min(S.level,rankArr.length-1)].toUpperCase();
+  ctx.font='600 13px Rajdhani,sans-serif';
+  const rg=ctx.createLinearGradient(0,0,W,0);rg.addColorStop(0,'#9d5cff');rg.addColorStop(1,'#4d94ff');
+  ctx.fillStyle=rg;ctx.fillText(rankTxt,W/2,272);
+  // Stats boxes
+  const stats=[
+    {val:S.level,lbl:t().levelStat},
+    {val:S.questsDone,lbl:t().questsStat},
+    {val:S.streak,lbl:'Стрик'},
+  ];
+  const bw=140,bh=68,gap=14,startX=(W-bw*3-gap*2)/2;
+  stats.forEach((s,i)=>{
+    const bx=startX+i*(bw+gap),by=298;
+    ctx.fillStyle='rgba(26,32,53,0.8)';roundRect(ctx,bx,by,bw,bh,10);ctx.fill();
+    ctx.strokeStyle='rgba(123,47,255,0.25)';ctx.lineWidth=1;roundRect(ctx,bx,by,bw,bh,10);ctx.stroke();
+    ctx.font='700 26px Orbitron,monospace';ctx.fillStyle='#e8ecf8';ctx.textAlign='center';ctx.fillText(s.val,bx+bw/2,by+36);
+    ctx.font='500 11px Rajdhani,sans-serif';ctx.fillStyle='rgba(255,255,255,0.4)';ctx.fillText(s.lbl.toUpperCase(),bx+bw/2,by+56);
+  });
+  // Skills
+  const maxSkills=4;const showSkills=S.skills.slice(0,maxSkills);
+  const sw=Math.min((W-48)/showSkills.length-8,120);
+  const sx=(W-sw*showSkills.length-8*(showSkills.length-1))/2;
+  ctx.font='600 12px Rajdhani,sans-serif';
+  showSkills.forEach((sk,i)=>{
+    const x=sx+i*(sw+8),y=394;
+    ctx.fillStyle='rgba(123,47,255,0.12)';roundRect(ctx,x,y,sw,28,8);ctx.fill();
+    ctx.strokeStyle='rgba(123,47,255,0.3)';ctx.lineWidth=1;roundRect(ctx,x,y,sw,28,8);ctx.stroke();
+    ctx.fillStyle='#9d5cff';ctx.textAlign='center';ctx.fillText(sk.name.slice(0,12),x+sw/2,y+18);
+  });
+  // Divider
+  ctx.strokeStyle='rgba(123,47,255,0.2)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(40,444);ctx.lineTo(W-40,444);ctx.stroke();
+  // Bot link
+  ctx.font='700 15px Orbitron,monospace';ctx.fillStyle=rg;ctx.textAlign='center';ctx.fillText('@GrowthArcBot',W/2,476);
+  ctx.font='500 12px Rajdhani,sans-serif';ctx.fillStyle='rgba(255,255,255,0.3)';ctx.fillText('t.me/GrowthArcBot',W/2,498);
+  // Footer
+  ctx.font='500 11px Rajdhani,sans-serif';ctx.fillStyle='rgba(255,255,255,0.2)';ctx.textAlign='center';ctx.fillText('GROWTH ARC · SYSTEM',W/2,H-30);
+}
+function drawDefaultAvatar(ctx,cx,cy,r){
+  ctx.fillStyle='rgba(26,32,53,1)';ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+  ctx.font=`${r*0.8}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('⚔️',cx,cy+2);ctx.textBaseline='alphabetic';
+}
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();
+}
+function doShare(){
+  const canvas=document.getElementById('share-canvas');
+  const url=canvas.toDataURL('image/png');
+  const rankArr=S.lang==='en'?RANKS_EN:RANKS;
+  const text=`⚔️ Growth Arc\n\n👤 ${S.name}\n🏆 ${t().levelStat} ${S.level} — ${rankArr[Math.min(S.level,rankArr.length-1)]}\n⚡ ${S.questsDone} ${t().questsStat.toLowerCase()}\n🔥 ${S.streak} ${t().streakDays}\n\nt.me/GrowthArcBot`;
+  if(window.Telegram?.WebApp?.openTelegramLink){
+    window.Telegram.WebApp.openTelegramLink('https://t.me/share/url?url=https://t.me/GrowthArcBot&text='+encodeURIComponent(text));
+  } else if(navigator.share){
+    fetch(url).then(r=>r.blob()).then(blob=>{
+      const file=new File([blob],'growth-arc.png',{type:'image/png'});
+      navigator.share({title:'Growth Arc',text,files:[file]}).catch(()=>shareText(text));
+    }).catch(()=>shareText(text));
+  } else {
+    const a=document.createElement('a');a.href=url;a.download='growth-arc.png';a.click();
+  }
+}
+function shareText(text){navigator.clipboard?.writeText(text);showToast(S.lang==='en'?'Copied!':'Скопировано!');}
+
+// ══════════════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════════════
+function switchTab(tab){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.style.display='none');
+  document.querySelectorAll('.nav-i').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+tab).style.display='block';
+  document.getElementById('nav-'+tab).classList.add('active');
+  if(tab==='quests')renderQuests();
+  if(tab==='log')renderLog();
+  if(tab==='char')renderChar();
+  if(tab==='settings'){renderSkillsEdit();populateSetHour();}
+}
+
+// ══════════════════════════════════════════════
+//  TOAST / XP FLY
+// ══════════════════════════════════════════════
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+function showXpFly(text,anchor){
+  const el=document.getElementById('xpfly');
+  const rect=anchor?anchor.getBoundingClientRect():{left:window.innerWidth/2,top:window.innerHeight/2,width:0};
+  el.textContent=text;el.style.left=(rect.left+rect.width/2)+'px';el.style.top=rect.top+'px';
+  el.classList.remove('go');void el.offsetWidth;el.classList.add('go');
+}
+
+// ══════════════════════════════════════════════
+//  TELEGRAM SDK
+// ══════════════════════════════════════════════
+if(window.Telegram?.WebApp){
+  const tg=window.Telegram.WebApp;
+  tg.ready();tg.expand();
+  tg.setHeaderColor?.('#05060a');tg.setBackgroundColor?.('#05060a');
+  const u=tg.initDataUnsafe?.user;
+  if(u){
+    if(u.first_name&&!S.name) document.getElementById('ob-name').value=u.first_name;
+    if(u.photo_url){tgAvatarUrl=u.photo_url;S.tgAvatar=u.photo_url;}
+    if(u.id) S.tgUserId=String(u.id);
+    if(u.language_code&&!S.name) setLang(u.language_code.startsWith('ru')?'ru':'en');
+  }
+}
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+load();
+if(S.tgAvatar) tgAvatarUrl=S.tgAvatar;
+setLang(S.lang||'ru');
+if(S.name) enterApp();
+</script>
+</body>
+</html>
