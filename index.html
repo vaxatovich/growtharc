@@ -891,7 +891,7 @@ let backendReady = false;
 let saveTimer = null;
 
 function hasConvexConfig(){
-  return CONVEX_HTTP_URL && !CONVEX_HTTP_URL.includes('https://cheerful-koala-224.eu-west-1.convex.site');
+  return Boolean(CONVEX_HTTP_URL);
 }
 
 function getTelegramInitData(){
