@@ -45,4 +45,9 @@ export const saveProfile = internalMutation({
 
     return { ok: true, created: true };
   },
+export const listProfiles = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("profiles").collect();
+  },
 });
