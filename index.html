@@ -503,6 +503,17 @@ html,body{background:var(--bg0);color:var(--text);font-family:'Rajdhani',sans-se
           <select class="time-sel" id="set-min"><option value="0">00</option><option value="30">30</option></select>
         </div>
         <button class="btn-save-set" onclick="saveTimeSettings()" id="btn-save-time">Сохранить</button>
+        <div class="toggle-row" style="margin-top:12px">
+  <div class="toggle-lbl">🔔 Уведомления</div>
+  <label class="toggle">
+    <input type="checkbox" id="notif-toggle" onchange="toggleNotifications()">
+    <span class="toggle-slider"></span>
+  </label>
+</div>
+
+<button class="btn-save-set" onclick="sendTestNotification()" id="btn-test-notif">
+  Отправить тестовое уведомление
+</button>
       </div>
     </div>
   </div>
@@ -946,7 +957,22 @@ if (S.notificationsEnabled === undefined) S.notificationsEnabled = true;
   if(u.id)S.tgUserId=String(u.id);
   if(u.language_code&&!S.name)S.lang=u.language_code.startsWith('ru')?'ru':'en';
 }
+function toggleNotifications(){
+  const el=document.getElementById('notif-toggle');
+  S.notificationsEnabled=!!el.checked;
+  save();
+  toast(S.notificationsEnabled?'Уведомления включены':'Уведомления выключены');
+}
 
+async function sendTestNotification(){
+  try{
+    await apiRequest('/test-notification',{method:'POST',body:JSON.stringify({})});
+    toast('Тестовое уведомление отправлено');
+  }catch(e){
+    toast('Не удалось отправить уведомление');
+    console.warn('Test notification failed',e);
+  }
+}
 async function apiRequest(path,options={}){
   if(!hasConvexConfig())throw new Error('Convex URL is not configured');
 
@@ -1178,6 +1204,14 @@ function populateSetHour(){
   const sh=document.getElementById('set-hour');if(!sh||sh.options.length)return;
   for(let h=0;h<24;h++)sh.innerHTML+=`<option value="${h}"${h===S.dayStartHour?' selected':''}>${String(h).padStart(2,'0')}</option>`;
   document.getElementById('set-min').value=S.dayStartMin;
+  function populateSetHour(){
+  const sh=document.getElementById('set-hour');if(!sh||sh.options.length)return;
+  for(let h=0;h<24;h++)sh.innerHTML+=`<option value="${h}" ${h===S.dayStartHour?' selected':''}>${String(h).padStart(2,'0')}</option>`;
+  document.getElementById('set-min').value=S.dayStartMin;
+
+  const notifToggle=document.getElementById('notif-toggle');
+  if(notifToggle) notifToggle.checked = S.notificationsEnabled !== false;
+}
 }
 
 // ══════════════════════════════════════════════

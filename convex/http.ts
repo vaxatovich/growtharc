@@ -157,5 +157,27 @@ http.route({
     }
   }),
 });
+http.route({
+  path: "/test-notification",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    try {
+      const initData = request.headers.get("X-Telegram-Init-Data") || "";
+      const { telegramId } = await validateTelegramInitData(initData);
 
+      await ctx.runAction(internal.notifications.sendTest, {
+        telegramId,
+      });
+
+      return json({ ok: true });
+    } catch (error) {
+      return json(
+        {
+          error: error instanceof Error ? error.message : "Unknown error",
+        },
+        401
+      );
+    }
+  }),
+});
 export default http;
