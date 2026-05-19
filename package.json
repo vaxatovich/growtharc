@@ -1,1 +1,13 @@
-
+{
+  "name": "growth-arc",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "convex": "^1.19.0"
+  },
+  "scripts": {
+    "convex:dev": "convex dev",
+    "convex:deploy": "convex deploy"
+  }
+}
