@@ -1204,6 +1204,14 @@ function populateSetHour(){
   const sh=document.getElementById('set-hour');if(!sh||sh.options.length)return;
   for(let h=0;h<24;h++)sh.innerHTML+=`<option value="${h}"${h===S.dayStartHour?' selected':''}>${String(h).padStart(2,'0')}</option>`;
   document.getElementById('set-min').value=S.dayStartMin;
+  function populateSetHour(){
+  const sh=document.getElementById('set-hour');if(!sh||sh.options.length)return;
+  for(let h=0;h<24;h++)sh.innerHTML+=`<option value="${h}" ${h===S.dayStartHour?' selected':''}>${String(h).padStart(2,'0')}</option>`;
+  document.getElementById('set-min').value=S.dayStartMin;
+
+  const notifToggle=document.getElementById('notif-toggle');
+  if(notifToggle) notifToggle.checked = S.notificationsEnabled !== false;
+}
 }
 
 // ══════════════════════════════════════════════
