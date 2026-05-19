@@ -880,8 +880,34 @@ const T={
 // ══════════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════════
-let S={name:'',tgAvatar:'',tgUserId:'',lang:'ru',level:0,xp:0,xpToNext:100,totalXp:0,questsDone:0,streak:0,streakSavedToday:false,lastQuestDate:'',lastGameDay:'',dayStartHour:6,dayStartMin:0,skills:[],quests:[],log:[]};
-let tgAvatarUrl='',chartMode='xp';
+let S={
+  name:'',
+  tgAvatar:'',
+  tgUserId:'',
+  lang:'ru',
+  level:0,
+  xp:0,
+  xpToNext:100,
+  totalXp:0,
+  questsDone:0,
+  streak:0,
+  streakSavedToday:false,
+  lastQuestDate:'',
+  lastGameDay:'',
+  dayStartHour:6,
+  dayStartMin:0,
+
+  notificationsEnabled:true,
+  timezoneOffsetMinutes:-new Date().getTimezoneOffset(),
+  lastDayStartNotification:'',
+  lastStreakWarningNotification:'',
+  lastNotificationError:'',
+
+  skills:[],
+  quests:[],
+  log:[]
+};
+  let tgAvatarUrl='',chartMode='xp';
 // ════════════════ BACKEND STORAGE ════════════════
 // После деплоя Convex замени эту строку на свой адрес вида:
 // https://your-deployment-name.convex.site
@@ -908,6 +934,8 @@ function saveLocal(){
 }
 
 function syncTelegramUserIntoState(){
+  S.timezoneOffsetMinutes = -new Date().getTimezoneOffset();
+if (S.notificationsEnabled === undefined) S.notificationsEnabled = true;
   const tg=window.Telegram?.WebApp;
   const u=tg?.initDataUnsafe?.user;
   if(!u)return;
