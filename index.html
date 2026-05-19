@@ -882,8 +882,95 @@ const T={
 // ══════════════════════════════════════════════
 let S={name:'',tgAvatar:'',tgUserId:'',lang:'ru',level:0,xp:0,xpToNext:100,totalXp:0,questsDone:0,streak:0,streakSavedToday:false,lastQuestDate:'',lastGameDay:'',dayStartHour:6,dayStartMin:0,skills:[],quests:[],log:[]};
 let tgAvatarUrl='',chartMode='xp';
-function load(){const d=localStorage.getItem('growtharc_v3');if(d)try{S={...S,...JSON.parse(d)};}catch(e){}}
-function save(){localStorage.setItem('growtharc_v3',JSON.stringify(S));}
+// ════════════════ BACKEND STORAGE ════════════════
+// После деплоя Convex замени эту строку на свой адрес вида:
+// https://your-deployment-name.convex.site
+const CONVEX_HTTP_URL = "https://PASTE-YOUR-CONVEX-URL-HERE.convex.site";
+
+let backendReady = false;
+let saveTimer = null;
+
+function hasConvexConfig(){
+  return CONVEX_HTTP_URL && !CONVEX_HTTP_URL.includes('PASTE-YOUR-CONVEX-URL-HERE');
+}
+
+function getTelegramInitData(){
+  return window.Telegram?.WebApp?.initData || '';
+}
+
+function loadLocal(){
+  const d=localStorage.getItem('growtharc_v3');
+  if(d)try{S={...S,...JSON.parse(d)};}catch(e){console.warn('Local state parse failed',e);}
+}
+
+function saveLocal(){
+  localStorage.setItem('growtharc_v3',JSON.stringify(S));
+}
+
+function syncTelegramUserIntoState(){
+  const tg=window.Telegram?.WebApp;
+  const u=tg?.initDataUnsafe?.user;
+  if(!u)return;
+
+  const nameInput=document.getElementById('ob-name');
+  if(u.first_name&&!S.name&&nameInput)nameInput.value=u.first_name;
+  if(u.photo_url){tgAvatarUrl=u.photo_url;S.tgAvatar=u.photo_url;}
+  if(u.id)S.tgUserId=String(u.id);
+  if(u.language_code&&!S.name)S.lang=u.language_code.startsWith('ru')?'ru':'en';
+}
+
+async function apiRequest(path,options={}){
+  if(!hasConvexConfig())throw new Error('Convex URL is not configured');
+
+  const response=await fetch(CONVEX_HTTP_URL+path,{
+    ...options,
+    headers:{
+      'Content-Type':'application/json',
+      'X-Telegram-Init-Data':getTelegramInitData(),
+      ...(options.headers||{})
+    }
+  });
+
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(data.error||'Backend error');
+  return data;
+}
+
+async function loadFromBackend(){
+  const data=await apiRequest('/state');
+  if(data.state){
+    S={...S,...data.state};
+    saveLocal();
+    return true;
+  }
+  return false;
+}
+
+function scheduleBackendSave(){
+  if(!backendReady)return;
+  clearTimeout(saveTimer);
+
+  saveTimer=setTimeout(async()=>{
+    try{
+      syncTelegramUserIntoState();
+      await apiRequest('/state',{
+        method:'POST',
+        body:JSON.stringify({state:S})
+      });
+    }catch(e){
+      console.warn('Backend save failed:',e.message);
+    }
+  },600);
+}
+
+// Старое имя load оставляем, чтобы остальной код не сломался.
+function load(){loadLocal();}
+
+// Старое имя save оставляем, потому что оно уже используется по всему приложению.
+function save(){
+  saveLocal();
+  scheduleBackendSave();
+}
 const t=()=>T[S.lang]||T.ru;
 
 // ══════════════════════════════════════════════
@@ -1678,26 +1765,55 @@ function showXpFly(text,anchor){
 // ══════════════════════════════════════════════
 //  TELEGRAM SDK
 // ══════════════════════════════════════════════
-if(window.Telegram?.WebApp){
-  const tg=window.Telegram.WebApp;
-  tg.ready();tg.expand();
-  tg.setHeaderColor?.('#05060a');tg.setBackgroundColor?.('#05060a');
-  const u=tg.initDataUnsafe?.user;
-  if(u){
-    if(u.first_name&&!S.name) document.getElementById('ob-name').value=u.first_name;
-    if(u.photo_url){tgAvatarUrl=u.photo_url;S.tgAvatar=u.photo_url;}
-    if(u.id) S.tgUserId=String(u.id);
-    if(u.language_code&&!S.name) setLang(u.language_code.startsWith('ru')?'ru':'en');
+function setupTelegramWebApp(){
+  if(window.Telegram?.WebApp){
+    const tg=window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+    tg.setHeaderColor?.('#05060a');
+    tg.setBackgroundColor?.('#05060a');
   }
 }
 
 // ══════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════
-load();
-if(S.tgAvatar) tgAvatarUrl=S.tgAvatar;
-setLang(S.lang||'ru');
-if(S.name) enterApp();
+async function initApp(){
+  setupTelegramWebApp();
+
+  // 1. Сначала читаем старый localStorage, чтобы не потерять текущий прогресс.
+  loadLocal();
+
+  // 2. Подтягиваем Telegram ID, имя, язык и аватар из Telegram Mini App.
+  syncTelegramUserIntoState();
+
+  // 3. Пробуем загрузить профиль из Convex по Telegram ID.
+  try{
+    const hasBackendState=await loadFromBackend();
+    backendReady=true;
+
+    // 4. После backend-загрузки ещё раз накладываем актуальные Telegram-данные.
+    syncTelegramUserIntoState();
+
+    // 5. Мягкая миграция: если в Convex профиля нет, но локально он уже есть,
+    // переносим старый localStorage-профиль на backend.
+    if(!hasBackendState&&S.name){
+      await apiRequest('/state',{
+        method:'POST',
+        body:JSON.stringify({state:S})
+      });
+    }
+  }catch(e){
+    backendReady=false;
+    console.warn('Convex backend unavailable, using localStorage only:',e.message);
+  }
+
+  if(S.tgAvatar)tgAvatarUrl=S.tgAvatar;
+  setLang(S.lang||'ru');
+  if(S.name)enterApp();
+}
+
+initApp();
 </script>
 </body>
 </html>
