@@ -8,7 +8,9 @@
  * @module
  */
 
+import type * as crons from "../crons.js";
 import type * as http from "../http.js";
+import type * as notifications from "../notifications.js";
 import type * as state from "../state.js";
 
 import type {
@@ -18,7 +20,9 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  crons: typeof crons;
   http: typeof http;
+  notifications: typeof notifications;
   state: typeof state;
 }>;
 
