@@ -1,5 +1,6 @@
 import { internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { v } from "convex/values";
 
 const CHECK_WINDOW_MINUTES = 10;
 
@@ -47,23 +48,12 @@ async function sendTelegramMessage(telegramId: string, text: string) {
   if (!token) throw new Error("BOT_TOKEN is not set");
 
   const reply_markup = appUrl
-    ? {
-        inline_keyboard: [
-          [
-            {
-              text: "Открыть Growth Arc",
-              web_app: { url: appUrl },
-            },
-          ],
-        ],
-      }
+    ? { inline_keyboard: [[{ text: "Открыть Growth Arc", web_app: { url: appUrl } }]] }
     : undefined;
 
   const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       chat_id: telegramId,
       text,
@@ -79,6 +69,20 @@ async function sendTelegramMessage(telegramId: string, text: string) {
 
   return data;
 }
+
+export const sendTest = internalAction({
+  args: {
+    telegramId: v.string(),
+  },
+  handler: async (_ctx, args) => {
+    await sendTelegramMessage(
+      args.telegramId,
+      `⚔️ [СИСТЕМА]\n\nТестовое уведомление Growth Arc успешно доставлено.\n\nСистема готова сопровождать твой прогресс.`
+    );
+
+    return { ok: true };
+  },
+});
 
 export const checkAndSend = internalAction({
   args: {},
@@ -100,8 +104,9 @@ export const checkAndSend = internalAction({
       const currentMinutes = getLocalMinutes(now, offset);
       const startMinutes = dayStartHour * 60 + dayStartMin;
       const warningMinutes = (startMinutes - 60 + 1440) % 1440;
-      const gameDayKey = getGameDayKey(now, state);
+      const summaryMinutes = (startMinutes - 10 + 1440) % 1440;
 
+      const gameDayKey = getGameDayKey(now, state);
       const completedToday = state.lastQuestDate === gameDayKey;
 
       const nextState = { ...state };
@@ -114,7 +119,7 @@ export const checkAndSend = internalAction({
         try {
           await sendTelegramMessage(
             telegramId,
-            `[СИСТЕМА]\n\n☀️Новый игровой день начался.\n\n Еще один шанс стать сильнее. Выполни хотя бы один квест, чтобы сохранить стрик.`
+            `☀️ [СИСТЕМА]\n\nНовый игровой день начался.\n\nЕще один шанс стать сильнее. Выполни хотя бы один квест, чтобы сохранить стрик.`
           );
 
           nextState.lastDayStartNotification = gameDayKey;
@@ -134,10 +139,36 @@ export const checkAndSend = internalAction({
         try {
           await sendTelegramMessage(
             telegramId,
-            `[СИСТЕМА]\n\n‼️Стрик под угрозой.\n\nДо конца игрового дня остался 1 час. Заверши хотя бы один квест, чтобы не потерять серию.`
+            `‼️ [СИСТЕМА]\n\nСтрик под угрозой.\n\nДо конца игрового дня остался 1 час. Заверши хотя бы один квест, чтобы не потерять серию.`
           );
 
           nextState.lastStreakWarningNotification = gameDayKey;
+          changed = true;
+        } catch (error) {
+          nextState.lastNotificationError =
+            error instanceof Error ? error.message : "Unknown Telegram error";
+          changed = true;
+        }
+      }
+
+      if (
+        isWithinWindow(currentMinutes, summaryMinutes) &&
+        state.lastDailySummaryNotification !== gameDayKey
+      ) {
+        const todayLogs = Array.isArray(state.log)
+          ? state.log.filter((item: any) => item.dateKey === gameDayKey || item.date === gameDayKey)
+          : [];
+
+        const questsToday = todayLogs.length;
+        const xpToday = todayLogs.reduce((sum: number, item: any) => sum + Number(item.xp || 0), 0);
+
+        try {
+          await sendTelegramMessage(
+            telegramId,
+            `📊 [СИСТЕМА]\n\nИтоги игрового дня.\n\nКвестов выполнено: ${questsToday}\nПолучено XP: ${xpToday}\nСтрик: ${Number(state.streak || 0)} дней\n\nНовый день уже близко.`
+          );
+
+          nextState.lastDailySummaryNotification = gameDayKey;
           changed = true;
         } catch (error) {
           nextState.lastNotificationError =
