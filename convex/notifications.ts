@@ -48,7 +48,7 @@ async function sendTelegramMessage(telegramId: string, text: string) {
   if (!token) throw new Error("BOT_TOKEN is not set");
 
   const reply_markup = appUrl
-    ? { inline_keyboard: [[{ text: "Начать игру", web_app: { url: appUrl } }]] }
+    ? { inline_keyboard: [[{ text: "Прокачать себя", web_app: { url: appUrl } }]] }
     : undefined;
 
   const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
