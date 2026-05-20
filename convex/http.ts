@@ -157,6 +157,19 @@ http.route({
     }
   }),
 });
+
+
+http.route({
+  path: "/test-notification",
+  method: "OPTIONS",
+  handler: httpAction(async () => {
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders,
+    });
+  }),
+});
+
 http.route({
   path: "/test-notification",
   method: "POST",
@@ -180,4 +193,5 @@ http.route({
     }
   }),
 });
+
 export default http;
