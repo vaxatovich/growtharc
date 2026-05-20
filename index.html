@@ -967,6 +967,8 @@ function toggleNotifications(){
   const el=document.getElementById('notif-toggle');
   S.notificationsEnabled=!!el.checked;
   save();
+  trackEvent(S.notificationsEnabled?'notifications_enabled':'notifications_disabled');
+  identifyUser();
   toast(S.notificationsEnabled?'Уведомления включены':'Уведомления выключены');
 }
 
@@ -983,28 +985,38 @@ async function sendTestNotification(){
 }
 
 function identifyUser(){
-  if(!window.posthog || !S.tgUserId) return;
+  try{
+    if(!window.posthog || !S.tgUserId) return;
 
-  window.posthog.identify(S.tgUserId, {
-    language: S.lang,
-    level: S.level,
-    totalXp: S.totalXp,
-    questsDone: S.questsDone,
-    streak: S.streak
-  });
+    window.posthog.identify(String(S.tgUserId), {
+      language: S.lang,
+      level: S.level,
+      totalXp: S.totalXp,
+      questsDone: S.questsDone,
+      streak: S.streak,
+      notificationsEnabled: S.notificationsEnabled !== false
+    });
+  }catch(e){
+    console.warn('PostHog identify failed', e);
+  }
 }
 
 function trackEvent(name, params={}){
-  if(!window.posthog) return;
+  try{
+    if(!window.posthog || !window.posthog.capture) return;
 
-  window.posthog.capture(name, {
-    ...params,
-    language: S.lang,
-    level: S.level,
-    totalXp: S.totalXp,
-    questsDone: S.questsDone,
-    streak: S.streak
-  });
+    window.posthog.capture(name, {
+      ...params,
+      language: S.lang,
+      level: S.level,
+      totalXp: S.totalXp,
+      questsDone: S.questsDone,
+      streak: S.streak,
+      notificationsEnabled: S.notificationsEnabled !== false
+    });
+  }catch(e){
+    console.warn('PostHog capture failed', name, e);
+  }
 }
 async function apiRequest(path,options={}){
   if(!hasConvexConfig())throw new Error('Convex URL is not configured');
@@ -1195,7 +1207,11 @@ function showObSkillInp(){
 }
 function addObCustomSkill(){
   const v=document.getElementById('ob-skill-inp').value.trim();if(!v)return;
-  if(!obCustom.includes(v)){obCustom.push(v);renderObCustomChips();}
+  if(!obCustom.includes(v)){
+    obCustom.push(v);
+    renderObCustomChips();
+    trackEvent('skill_created',{source:'onboarding',skillName:v});
+  }
   document.getElementById('ob-skill-inp').value='';
   document.getElementById('ob-skill-inp-row').style.display='none';obSkillInpVis=false;checkObReady();
 }
@@ -1217,7 +1233,14 @@ function startGame(){
   const all=[...obPresets,...obCustom];if(!all.length)return;
   S.name=name;S.dayStartHour=parseInt(document.getElementById('ob-hour').value);S.dayStartMin=parseInt(document.getElementById('ob-min').value);
   S.skills=all.map(s=>({name:s,xp:0,level:1}));
-  save();enterApp();
+  save();
+  identifyUser();
+  trackEvent('profile_created',{
+    skillsCount:S.skills.length,
+    dayStartHour:S.dayStartHour,
+    dayStartMin:S.dayStartMin
+  });
+  enterApp();
 }
 
 // ══════════════════════════════════════════════
@@ -1528,7 +1551,11 @@ function delSkill(i){
 function addNewSkill(){
   const v=document.getElementById('new-skill-inp').value.trim();if(!v)return;
   if(S.skills.find(s=>s.name===v)){showToast(t().existsErr);return;}
-  S.skills.push({name:v,xp:0,level:1});document.getElementById('new-skill-inp').value='';save();renderAll();
+  S.skills.push({name:v,xp:0,level:1});
+  document.getElementById('new-skill-inp').value='';
+  save();
+  trackEvent('skill_created',{source:'settings',skillName:v,skillsCount:S.skills.length});
+  renderAll();
 }
 function saveTimeSettings(){
   S.dayStartHour=parseInt(document.getElementById('set-hour').value);
@@ -1613,8 +1640,11 @@ function submitQuest(){
   if(editingQuestId){
     const q=S.quests.find(x=>x.id===editingQuestId);
     if(q) Object.assign(q,{title,skill:qSkill,diff:qDiff,type:qType,deadlineDate:dl,goalNum,goalUnit,timerEnabled});
+    trackEvent('quest_edited',{questId:editingQuestId,skill:qSkill,difficulty:qDiff,type:qType,hasGoal:!!goalUnit,hasDeadline:!!dl,timerEnabled:!!timerEnabled});
   } else {
-    S.quests.push({id:Date.now().toString(),title,skill:qSkill,diff:qDiff,type:qType,progress:0,deadlineDate:dl,goalNum,goalUnit,timerEnabled,timeSpentSeconds:0,timerStatus:'idle',timerStartedAt:null,completedThisPeriod:false,lastCompletedDate:'',createdAt:new Date().toLocaleDateString()});
+    const newQuest={id:Date.now().toString(),title,skill:qSkill,diff:qDiff,type:qType,progress:0,deadlineDate:dl,goalNum,goalUnit,timerEnabled,timeSpentSeconds:0,timerStatus:'idle',timerStartedAt:null,completedThisPeriod:false,lastCompletedDate:'',createdAt:new Date().toLocaleDateString()};
+    S.quests.push(newQuest);
+    trackEvent('quest_created',{questId:newQuest.id,skill:qSkill,difficulty:qDiff,type:qType,hasGoal:!!goalUnit,hasDeadline:!!dl,timerEnabled:!!timerEnabled,questsActive:S.quests.length});
   }
   save();closeModal();switchTab('quests');renderAll();
 }
@@ -1635,8 +1665,12 @@ function completeQuest(id){
     const today=new Date().toLocaleDateString();
     S.log.push({id:Date.now(),title:q.title,skill:q.skill,diff:q.diff,type:q.type,xp:earned,date:today,timeStr,timeSec:q.timeSpentSeconds||0});
     S.questsDone++;
+    const completedQuestType=q.type;
     if(q.type==='once') S.quests=S.quests.filter(x=>x.id!==id);
     else{q.progress=0;q.completedThisPeriod=true;q.lastCompletedDate=new Date().toDateString();q.timeSpentSeconds=0;q.timerStatus='idle';}
+    trackEvent('quest_completed',{questId:id,skill:q.skill,difficulty:q.diff,type:completedQuestType,xpEarned:earned,streakBonus:bonus,timeSpentSeconds:q.timeSpentSeconds||0});
+    if(completedQuestType!=='once')trackEvent('habit_completed',{questId:id,skill:q.skill,difficulty:q.diff,type:completedQuestType,xpEarned:earned});
+    identifyUser();
     save();renderAll();showResult(q,earned,bonus,timeStr);showXpFly('+'+earned+' XP',card);
   },700);
 }
@@ -1729,6 +1763,7 @@ function closeLU(){document.getElementById('lu-ov').classList.remove('show');ren
 //  SHARE — canvas card
 // ══════════════════════════════════════════════
 function openShare(){
+  trackEvent('share_progress_clicked');
   drawShareCard();
   document.getElementById('share-ov').classList.add('show');
 }
@@ -1845,10 +1880,11 @@ function switchTab(tab){
   document.querySelectorAll('.nav-i').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+tab).style.display='block';
   document.getElementById('nav-'+tab).classList.add('active');
-  if(tab==='quests')renderQuests();
+  trackEvent('tab_opened',{tab});
+  if(tab==='quests'){trackEvent('opened_quests_tab');renderQuests();}
   if(tab==='log')renderLog();
   if(tab==='char')renderChar();
-  if(tab==='settings'){renderSkillsEdit();populateSetHour();}
+  if(tab==='settings'){trackEvent('opened_settings');renderSkillsEdit();populateSetHour();}
 }
 
 // ══════════════════════════════════════════════
