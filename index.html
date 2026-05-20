@@ -936,12 +936,12 @@ function getTelegramInitData(){
 }
 
 function loadLocal(){
-  const d=localStorage.getItem('growtharc_v3');
+  const d=localStorage.getItem('growtharc_v4');
   if(d)try{S={...S,...JSON.parse(d)};}catch(e){console.warn('Local state parse failed',e);}
 }
 
 function saveLocal(){
-  localStorage.setItem('growtharc_v3',JSON.stringify(S));
+  localStorage.setItem('growtharc_v4',JSON.stringify(S));
 }
 
 function syncTelegramUserIntoState(){
