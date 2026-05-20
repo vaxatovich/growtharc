@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "convex": "^1.19.0"
+    "convex": "^1.19.0",
+    "html2canvas": "^1.4.1"
   },
   "scripts": {
     "convex:dev": "convex dev",
