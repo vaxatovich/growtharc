@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+  <script>
+  !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript";p.crossOrigin="anonymous";p.async=!0;p.src=s.api_host+"/static/array.js";(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags reloadFeatureFlags group pageview".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+  
+  posthog.init("phc_uRGoej2rvAeTe36AhumztqoMKiqxbPLrUyTAnuwaetaS", {
+    api_host: "https://eu.i.posthog.com"
+  });
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Growth Arc</title>
@@ -972,6 +979,30 @@ async function sendTestNotification(){
     toast('Не удалось отправить уведомление');
     console.warn('Test notification failed',e);
   }
+  function identifyUser(){
+  if(!window.posthog || !S.tgUserId) return;
+
+  window.posthog.identify(S.tgUserId, {
+    language: S.lang,
+    level: S.level,
+    totalXp: S.totalXp,
+    questsDone: S.questsDone,
+    streak: S.streak
+  });
+}
+
+function trackEvent(name, params={}){
+  if(!window.posthog) return;
+
+  window.posthog.capture(name, {
+    ...params,
+    language: S.lang,
+    level: S.level,
+    totalXp: S.totalXp,
+    questsDone: S.questsDone,
+    streak: S.streak
+  });
+}
 }
 async function apiRequest(path,options={}){
   if(!hasConvexConfig())throw new Error('Convex URL is not configured');
@@ -1196,6 +1227,8 @@ function enterApp(){
   document.getElementById('bnav').classList.add('show');
   spawnParticles();checkDayReset();renderAll();applyLang();populateSetHour();
 }
+trackEvent('app_opened');
+identifyUser();
 function spawnParticles(){
   const l=document.querySelector('.bgl');
   for(let i=0;i<18;i++){const p=document.createElement('div');p.className='bgp';p.style.left=Math.random()*100+'%';p.style.animationDuration=(8+Math.random()*15)+'s';p.style.animationDelay=(Math.random()*15)+'s';if(Math.random()>.6){p.style.background='var(--b3)';p.style.boxShadow='0 0 6px var(--b)';}l.appendChild(p);}
