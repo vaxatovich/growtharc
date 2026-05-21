@@ -686,7 +686,7 @@ body.light-theme .result-box{box-shadow:0 10px 35px rgba(36,24,75,.08);}
 <div class="share-ov" id="share-ov" onclick="closeShareOut(event)">
   <div class="share-wrap">
     <div class="share-preview">
-      <canvas id="share-canvas" width="540" height="675"></canvas>
+      <canvas id="share-canvas" width="540" height="852"></canvas>
     </div>
     <div class="sh-actions">
       <button class="btn-sh-close" onclick="closeShare()">
@@ -1955,7 +1955,7 @@ function getLast7DayMarks(){
 function drawShareCard(options={}){
   const canvas=document.getElementById('share-canvas');
   const ctx=canvas.getContext('2d');
-  const W=900,H=1350;
+  const W=900,H=1420;
   canvas.width=W;
   canvas.height=H;
 
@@ -2135,7 +2135,7 @@ function drawShareCard(options={}){
   });
 
   // Footer promo block — text left, neon mountain right, no QR and no extra link line
-  const footX=72,footY=1210,footW=756,footH=108;
+  const footX=72,footY=1212,footW=756,footH=128;
   const footGrad=ctx.createLinearGradient(footX,footY,footX+footW,footY+footH);
   footGrad.addColorStop(0,'rgba(16,20,42,.90)');
   footGrad.addColorStop(.54,'rgba(8,12,28,.86)');
@@ -2150,13 +2150,13 @@ function drawShareCard(options={}){
   ctx.textAlign='left';
   ctx.fillStyle='#9d5cff';
   ctx.font='900 33px Rajdhani, sans-serif';
-  ctx.fillText('@GrowthArcBot',footX+34,footY+48);
+  ctx.fillText('GrowthArc_bot',footX+34,footY+54);
   ctx.fillStyle='rgba(232,236,248,.60)';
   ctx.font='700 22px Rajdhani, sans-serif';
-  wrapShareText(ctx,L.botLine,footX+34,footY+78,360,26);
+  wrapShareText(ctx,L.botLine,footX+34,footY+90,360,26);
 
   // neon mountain with flag on the right
-  drawMountain(ctx,footX+510,footY+12,225,88);
+  drawMountain(ctx,footX+500,footY+10,250,108);
 }
 
 
