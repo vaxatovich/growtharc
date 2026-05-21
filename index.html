@@ -248,6 +248,9 @@ html,body{background:var(--bg0);color:var(--text);font-family:'Rajdhani',sans-se
 .toggle input:checked+.toggle-slider::before{transform:translateX(20px);background:var(--p3);}
 .btn-submit{width:100%;padding:14px;margin-top:16px;background:linear-gradient(135deg,var(--p2),var(--b2));border:1px solid var(--brd);border-radius:var(--r);color:var(--text);font-family:'Orbitron',monospace;font-size:12px;font-weight:700;letter-spacing:2px;cursor:pointer;transition:.2s;box-shadow:var(--gp);display:flex;align-items:center;justify-content:center;gap:8px;}
 .btn-submit:disabled{opacity:.35;cursor:not-allowed;box-shadow:none;}
+.btn-edit-delete{width:100%;padding:12px;margin-top:10px;background:rgba(255,64,96,.10);border:1px solid rgba(255,64,96,.35);border-radius:var(--r);color:var(--red);font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:800;letter-spacing:1px;cursor:pointer;display:none;align-items:center;justify-content:center;gap:8px;}
+.btn-edit-delete:active{transform:scale(.98);}
+
 /* RESULT */
 .result-ov{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.92);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.3s;}
 .result-ov.show{opacity:1;pointer-events:all;}
@@ -668,6 +671,10 @@ body.light-theme .result-box{box-shadow:0 10px 35px rgba(36,24,75,.08);}
       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"><g stroke="white" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.25 16.75 5.5v4.1c0 4.3-2.05 7.8-4.75 9.65-2.7-1.85-4.75-5.35-4.75-9.65V5.5L12 3.25Z"/></g></svg>
       <span id="btn-submit-txt">ПРИНЯТЬ КВЕСТ</span>
     </button>
+    <button class="btn-edit-delete" id="btn-edit-delete" onclick="deleteEditingQuest()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"><g stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="M5.35 7.2h13.3"/><path d="M9.1 7.2V5.35c0-.8.65-1.45 1.45-1.45h2.9c.8 0 1.45.65 1.45 1.45V7.2"/><path d="m17.45 7.2-.85 12a1.65 1.65 0 0 1-1.65 1.55h-5.9A1.65 1.65 0 0 1 7.4 19.2l-.85-12"/><path d="M10.2 10.55v6.5"/><path d="M13.8 10.55v6.5"/></g></svg>
+      <span id="btn-edit-delete-txt">Удалить квест</span>
+    </button>
   </div>
 </div>
 
@@ -686,7 +693,7 @@ body.light-theme .result-box{box-shadow:0 10px 35px rgba(36,24,75,.08);}
 <div class="share-ov" id="share-ov" onclick="closeShareOut(event)">
   <div class="share-wrap">
     <div class="share-preview">
-      <canvas id="share-canvas" width="540" height="852"></canvas>
+      <canvas id="share-canvas" width="540" height="675"></canvas>
     </div>
     <div class="sh-actions">
       <button class="btn-sh-close" onclick="closeShare()">
@@ -816,6 +823,7 @@ const T={
     existsErr:'Уже существует',
     timeSaved:'✓ Время сохранено',
     deleted:'Квест удалён',
+    deleteQuestEdit:'Удалить квест',
     timerStart:'▶ Старт',
     timerPause:'⏸ Пауза',
     timerReset:'↺ Сброс',
@@ -823,7 +831,7 @@ const T={
     themeTitle:'ТЕМА',
     themeDark:'Тёмная',
     themeLight:'Светлая',
-    shareBotNote:'@GrowthArcBot',
+    shareBotNote:'@GrowthArc_bot',
     typeLblMap:{once:'Разовый',daily:'Ежедневный',weekly:'Еженедельный',monthly:'Ежемесячный'},
   },
   en:{
@@ -913,6 +921,7 @@ const T={
     existsErr:'Already exists',
     timeSaved:'✓ Time saved',
     deleted:'Quest deleted',
+    deleteQuestEdit:'Delete quest',
     timerStart:'▶ Start',
     timerPause:'⏸ Pause',
     timerReset:'↺ Reset',
@@ -920,7 +929,7 @@ const T={
     themeTitle:'THEME',
     themeDark:'Dark',
     themeLight:'Light',
-    shareBotNote:'@GrowthArcBot',
+    shareBotNote:'@GrowthArc_bot',
     typeLblMap:{once:'One-time',daily:'Daily',weekly:'Weekly',monthly:'Monthly'},
   }
 };
@@ -1667,6 +1676,7 @@ function openCreate(){
   resetModalForm();
   document.getElementById('modal-title-text').textContent=t().newQuestTitle;
   document.getElementById('btn-submit-txt').textContent=t().acceptQuest;
+  const delBtn=document.getElementById('btn-edit-delete');if(delBtn)delBtn.style.display='none';
   document.getElementById('modal-ov').classList.add('open');
   setTimeout(()=>document.getElementById('q-title').focus(),300);
 }
@@ -1676,6 +1686,7 @@ function openEdit(id){
   resetModalForm();
   document.getElementById('modal-title-text').textContent=t().editQuestTitle;
   document.getElementById('btn-submit-txt').textContent=t().saveChanges;
+  const delBtn=document.getElementById('btn-edit-delete');if(delBtn){delBtn.style.display='flex';document.getElementById('btn-edit-delete-txt').textContent=t().deleteQuestEdit||'Удалить квест';}
   document.getElementById('q-title').value=q.title;
   if(q.goalNum) document.getElementById('q-goal-num').value=q.goalNum;
   if(q.goalUnit){
@@ -1699,6 +1710,7 @@ function resetModalForm(){
   document.getElementById('q-timer').checked=false;
   document.getElementById('q-skill-inp-row').style.display='none';mSkillInpVis=false;
   document.getElementById('btn-submit').disabled=true;
+  const delBtn=document.getElementById('btn-edit-delete');if(delBtn)delBtn.style.display=editingQuestId?'flex':'none';
   document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('sel'));
   document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('sel'));
   renderModalSkills();
@@ -1771,7 +1783,22 @@ function completeQuest(id){
     save();renderAll();showResult(q,earned,bonus,timeStr);showXpFly('+'+earned+' XP',card);
   },700);
 }
-function deleteQuest(id){S.quests=S.quests.filter(q=>q.id!==id);save();renderQuests();showToast(t().deleted);}
+function deleteQuest(id){
+  if(timerIntervals[id]){clearInterval(timerIntervals[id]);delete timerIntervals[id];}
+  S.quests=S.quests.filter(q=>q.id!==id);
+  save();
+  renderQuests();
+  renderChar();
+  trackEvent('quest_deleted',{questId:id});
+  showToast(t().deleted);
+}
+function deleteEditingQuest(){
+  if(!editingQuestId)return;
+  const id=editingQuestId;
+  closeModal();
+  editingQuestId=null;
+  deleteQuest(id);
+}
 function updateStreak(){
   const today=getGameDay();
   if(!S.streakSavedToday){
@@ -1955,7 +1982,7 @@ function getLast7DayMarks(){
 function drawShareCard(options={}){
   const canvas=document.getElementById('share-canvas');
   const ctx=canvas.getContext('2d');
-  const W=900,H=1420;
+  const W=900,H=1400;
   canvas.width=W;
   canvas.height=H;
 
@@ -2135,7 +2162,7 @@ function drawShareCard(options={}){
   });
 
   // Footer promo block — text left, neon mountain right, no QR and no extra link line
-  const footX=72,footY=1212,footW=756,footH=128;
+  const footX=72,footY=1210,footW=756,footH=124;
   const footGrad=ctx.createLinearGradient(footX,footY,footX+footW,footY+footH);
   footGrad.addColorStop(0,'rgba(16,20,42,.90)');
   footGrad.addColorStop(.54,'rgba(8,12,28,.86)');
@@ -2145,18 +2172,18 @@ function drawShareCard(options={}){
 
   // subtle vertical divider between promo text and decorative illustration
   ctx.strokeStyle='rgba(123,47,255,.16)';ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(footX+462,footY+14);ctx.lineTo(footX+462,footY+footH-14);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(footX+462,footY+16);ctx.lineTo(footX+462,footY+footH-16);ctx.stroke();
 
   ctx.textAlign='left';
   ctx.fillStyle='#9d5cff';
   ctx.font='900 33px Rajdhani, sans-serif';
-  ctx.fillText('GrowthArc_bot',footX+34,footY+54);
+  ctx.fillText('@GrowthArc_bot',footX+34,footY+48);
   ctx.fillStyle='rgba(232,236,248,.60)';
   ctx.font='700 22px Rajdhani, sans-serif';
-  wrapShareText(ctx,L.botLine,footX+34,footY+90,360,26);
+  wrapShareText(ctx,L.botLine,footX+34,footY+82,340,26);
 
   // neon mountain with flag on the right
-  drawMountain(ctx,footX+500,footY+10,250,108);
+  drawMountain(ctx,footX+494,footY+8,250,108);
 }
 
 
@@ -2209,12 +2236,13 @@ function drawMountain(ctx,x,y,w,h){
   if(SHARE_MOUNTAIN_IMG.complete&&SHARE_MOUNTAIN_IMG.naturalWidth){
     const iw=SHARE_MOUNTAIN_IMG.naturalWidth;
     const ih=SHARE_MOUNTAIN_IMG.naturalHeight;
-    const scale=Math.max(w/iw,h/ih);
-    const sw=w/scale;
-    const sh=h/scale;
-    const sx=(iw-sw)/2;
-    const sy=(ih-sh)/2;
-    ctx.drawImage(SHARE_MOUNTAIN_IMG,sx,sy,sw,sh,x,y,w,h);
+    const pad=4;
+    const scale=Math.min((w-pad*2)/iw,(h-pad*2)/ih);
+    const dw=iw*scale;
+    const dh=ih*scale;
+    const dx=x+(w-dw)/2;
+    const dy=y+(h-dh)/2+2;
+    ctx.drawImage(SHARE_MOUNTAIN_IMG,dx,dy,dw,dh);
   }else{
     const bg=ctx.createLinearGradient(x,y,x+w,y+h);
     bg.addColorStop(0,'rgba(7,8,18,.95)');
