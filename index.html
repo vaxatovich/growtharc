@@ -2121,32 +2121,46 @@ function drawShareCard(options={}){
     if(m.done){ctx.fillStyle='#00e5a0';ctx.font='900 26px Rajdhani, sans-serif';ctx.fillText('✓',x,dayY+51);}
   });
 
-  // Footer block without QR — clean promo panel + mountain accent
+  // Footer promo block — text left, neon mountain right, no QR and no extra link line
   const footX=72,footY=1210,footW=756,footH=108;
   const footGrad=ctx.createLinearGradient(footX,footY,footX+footW,footY+footH);
-  footGrad.addColorStop(0,'rgba(16,20,42,.86)');
-  footGrad.addColorStop(.58,'rgba(10,14,30,.82)');
-  footGrad.addColorStop(1,'rgba(18,8,40,.72)');
+  footGrad.addColorStop(0,'rgba(16,20,42,.90)');
+  footGrad.addColorStop(.54,'rgba(8,12,28,.86)');
+  footGrad.addColorStop(1,'rgba(20,8,44,.78)');
   ctx.fillStyle=footGrad;roundRect(ctx,footX,footY,footW,footH,18);ctx.fill();
-  ctx.strokeStyle='rgba(123,47,255,.28)';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.strokeStyle='rgba(123,47,255,.30)';ctx.lineWidth=1.5;ctx.stroke();
 
-  // subtle separator between text and visual accent
-  ctx.strokeStyle='rgba(123,47,255,.15)';ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(footX+466,footY+14);ctx.lineTo(footX+466,footY+footH-14);ctx.stroke();
+  // subtle vertical divider between promo text and decorative illustration
+  ctx.strokeStyle='rgba(123,47,255,.16)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(footX+462,footY+14);ctx.lineTo(footX+462,footY+footH-14);ctx.stroke();
 
   ctx.textAlign='left';
   ctx.fillStyle='#9d5cff';
-  ctx.font='900 32px Rajdhani, sans-serif';
-  ctx.fillText('@GrowthArcBot',footX+34,footY+43);
-  ctx.fillStyle='#a35cff';
+  ctx.font='900 33px Rajdhani, sans-serif';
+  ctx.fillText('@GrowthArcBot',footX+34,footY+48);
+  ctx.fillStyle='rgba(232,236,248,.60)';
   ctx.font='700 22px Rajdhani, sans-serif';
-  ctx.fillText('t.me/GrowthArcBot',footX+34,footY+72);
-  ctx.fillStyle='rgba(232,236,248,.58)';
-  ctx.font='600 19px Rajdhani, sans-serif';
-  ctx.fillText(L.botLine,footX+34,footY+98);
+  wrapShareText(ctx,L.botLine,footX+34,footY+78,360,26);
 
-  // neon mountain / progress symbol on the right
-  drawMountain(ctx,footX+520,footY+15,205,82);
+  // neon mountain with flag on the right
+  drawMountain(ctx,footX+510,footY+12,225,88);
+}
+
+
+function wrapShareText(ctx,text,x,y,maxWidth,lineHeight){
+  const words=String(text||'').split(' ');
+  let line='';
+  for(const word of words){
+    const test=line?line+' '+word:word;
+    if(ctx.measureText(test).width>maxWidth&&line){
+      ctx.fillText(line,x,y);
+      line=word;
+      y+=lineHeight;
+    }else{
+      line=test;
+    }
+  }
+  if(line)ctx.fillText(line,x,y);
 }
 
 function drawHeaderLines(ctx,x,y,w,color){
