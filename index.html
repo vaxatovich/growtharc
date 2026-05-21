@@ -2106,17 +2106,31 @@ function canvasToBlob(canvas){
 }
 
 async function doShare(){
-  const canvas=document.getElementById('share-canvas');
+  let canvas=document.getElementById('share-canvas');
   let blob;
 
   try{
     blob=await canvasToBlob(canvas);
   }catch(e){
-    // Если аватар из Telegram заблокировал экспорт canvas, перерисовываем без внешней картинки.
+    // Telegram avatar/photo URLs can taint a canvas on iOS/Telegram WebView.
+    // Once tainted, the same canvas cannot be exported even after clearRect(),
+    // so we replace it with a clean canvas and redraw the card without external images.
+    console.warn('Share image export failed, retrying without external avatar',e);
+    const freshCanvas=document.createElement('canvas');
+    freshCanvas.id='share-canvas';
+    freshCanvas.width=canvas.width;
+    freshCanvas.height=canvas.height;
+    freshCanvas.style.display=canvas.style.display;
+    freshCanvas.style.width=canvas.style.width;
+    freshCanvas.style.height=canvas.style.height;
+    canvas.parentNode.replaceChild(freshCanvas,canvas);
+    canvas=freshCanvas;
     drawShareCard({skipAvatar:true});
-    try{blob=await canvasToBlob(canvas);}
-    catch(err){
-      console.warn('Share image export failed',err);
+
+    try{
+      blob=await canvasToBlob(canvas);
+    }catch(err){
+      console.warn('Share image export failed after clean redraw',err);
       showToast(S.lang==='en'?'Could not create image':'Не удалось создать картинку');
       return;
     }
