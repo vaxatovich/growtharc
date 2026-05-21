@@ -1907,139 +1907,399 @@ function openShare(){
   drawShareCard();
   document.getElementById('share-ov').classList.add('show');
 }
+
 function closeShare(){document.getElementById('share-ov').classList.remove('show');}
 function closeShareOut(e){if(e.target===document.getElementById('share-ov'))closeShare();}
+
+function getRankText(){
+  const rankArr=S.lang==='en'?RANKS_EN:RANKS;
+  return rankArr[Math.min(S.level||0,rankArr.length-1)]||rankArr[0];
+}
+
+function getTopSkills(limit=3){
+  return [...(S.skills||[])]
+    .sort((a,b)=>(b.xp||0)-(a.xp||0))
+    .slice(0,limit);
+}
+
+function getLast7DayMarks(){
+  const marks=[];
+  const doneDays=new Set((S.log||[]).map(item=>String(item.date||'')));
+  const namesRu=['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+  const namesEn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  for(let i=6;i>=0;i--){
+    const d=new Date();
+    d.setDate(d.getDate()-i);
+    marks.push({
+      label:(S.lang==='en'?namesEn:namesRu)[d.getDay()],
+      done:doneDays.has(d.toLocaleDateString())
+    });
+  }
+  return marks;
+}
 
 function drawShareCard(options={}){
   const canvas=document.getElementById('share-canvas');
   const ctx=canvas.getContext('2d');
-  const W=540,H=675;
-  canvas.width=W;canvas.height=H;
+  const W=900,H=1200;
+  canvas.width=W;
+  canvas.height=H;
 
-  // Background
-  ctx.fillStyle='#05060a';ctx.fillRect(0,0,W,H);
-  // Purple glow top
-  const grd=ctx.createRadialGradient(W/2,0,0,W/2,0,H*0.7);
-  grd.addColorStop(0,'rgba(123,47,255,0.2)');grd.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle=grd;ctx.fillRect(0,0,W,H);
-  // Bottom blue glow
-  const grd2=ctx.createRadialGradient(W,H,0,W,H,H*0.6);
-  grd2.addColorStop(0,'rgba(26,111,255,0.12)');grd2.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle=grd2;ctx.fillRect(0,0,W,H);
-  // Grid lines
-  ctx.strokeStyle='rgba(123,47,255,0.06)';ctx.lineWidth=1;
-  for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
-  for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
-  // Border
-  ctx.strokeStyle='rgba(123,47,255,0.5)';ctx.lineWidth=1.5;roundRect(ctx,16,16,W-32,H-32,16);ctx.stroke();
-  // Logo
-  ctx.font='900 22px Orbitron,monospace';
-  const lg=ctx.createLinearGradient(0,0,W,0);lg.addColorStop(0,'#9d5cff');lg.addColorStop(1,'#4d94ff');
-  ctx.fillStyle=lg;ctx.textAlign='center';ctx.fillText('GROWTH ARC',W/2,58);
-  ctx.font='500 13px Rajdhani,sans-serif';ctx.fillStyle='rgba(255,255,255,0.3)';ctx.fillText('SYSTEM',W/2,78);
-  // Avatar circle
-  const cx=W/2,cy=160,r=56;
-  ctx.save();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.clip();
-  if(!options.skipAvatar&&tgAvatarUrl){try{const img=document.querySelector('#char-av img');if(img)ctx.drawImage(img,cx-r,cy-r,r*2,r*2);else drawDefaultAvatar(ctx,cx,cy,r);}catch{drawDefaultAvatar(ctx,cx,cy,r);}}
-  else drawDefaultAvatar(ctx,cx,cy,r);
+  // Base background
+  const bg=ctx.createLinearGradient(0,0,W,H);
+  bg.addColorStop(0,'#120724');
+  bg.addColorStop(.45,'#070812');
+  bg.addColorStop(1,'#03050b');
+  ctx.fillStyle=bg;
+  ctx.fillRect(0,0,W,H);
+
+  // Glows
+  let glow=ctx.createRadialGradient(W*.5,80,0,W*.5,80,560);
+  glow.addColorStop(0,'rgba(123,47,255,.30)');
+  glow.addColorStop(1,'rgba(123,47,255,0)');
+  ctx.fillStyle=glow;
+  ctx.fillRect(0,0,W,H);
+
+  glow=ctx.createRadialGradient(W,980,0,W,980,520);
+  glow.addColorStop(0,'rgba(26,111,255,.18)');
+  glow.addColorStop(1,'rgba(26,111,255,0)');
+  ctx.fillStyle=glow;
+  ctx.fillRect(0,0,W,H);
+
+  // Grid
+  ctx.strokeStyle='rgba(157,92,255,.075)';
+  ctx.lineWidth=1;
+  for(let x=60;x<W-60;x+=48){ctx.beginPath();ctx.moveTo(x,52);ctx.lineTo(x,H-52);ctx.stroke();}
+  for(let y=60;y<H-60;y+=48){ctx.beginPath();ctx.moveTo(52,y);ctx.lineTo(W-52,y);ctx.stroke();}
+
+  // Outer card
+  ctx.save();
+  ctx.shadowColor='rgba(123,47,255,.65)';
+  ctx.shadowBlur=28;
+  ctx.strokeStyle='rgba(157,92,255,.8)';
+  ctx.lineWidth=2.5;
+  roundRect(ctx,38,38,W-76,H-76,34);
+  ctx.stroke();
   ctx.restore();
-  // Avatar ring
-  const ring=ctx.createLinearGradient(cx-r,cy-r,cx+r,cy+r);ring.addColorStop(0,'#9d5cff');ring.addColorStop(1,'#4d94ff');
-  ctx.strokeStyle=ring;ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(cx,cy,r+2,0,Math.PI*2);ctx.stroke();
-  // Name
-  ctx.fillStyle='#e8ecf8';ctx.textAlign='center';fitText(ctx,(S.name||'PLAYER').toUpperCase(),W/2,248,360,26,'700','Cinzel,serif');
-  // Rank
-  const rankArr=S.lang==='en'?RANKS_EN:RANKS;
-  const rankTxt=rankArr[Math.min(S.level,rankArr.length-1)].toUpperCase();
-  ctx.font='600 13px Rajdhani,sans-serif';
-  const rg=ctx.createLinearGradient(0,0,W,0);rg.addColorStop(0,'#9d5cff');rg.addColorStop(1,'#4d94ff');
-  ctx.fillStyle=rg;ctx.fillText(rankTxt,W/2,272);
-  // Stats boxes
+
+  ctx.strokeStyle='rgba(255,255,255,.05)';
+  ctx.lineWidth=1;
+  roundRect(ctx,58,58,W-116,H-116,26);
+  ctx.stroke();
+
+  // Header
+  const titleGrad=ctx.createLinearGradient(260,0,640,0);
+  titleGrad.addColorStop(0,'#9d5cff');
+  titleGrad.addColorStop(.5,'#e8ecf8');
+  titleGrad.addColorStop(1,'#4d94ff');
+
+  ctx.textAlign='center';
+  ctx.fillStyle=titleGrad;
+  ctx.font='900 54px Orbitron, monospace';
+  ctx.fillText('GROWTH ARC',W/2,118);
+
+  ctx.fillStyle='rgba(232,236,248,.35)';
+  ctx.font='600 19px Orbitron, monospace';
+  ctx.fillText('SYSTEM',W/2,154);
+
+  // Avatar
+  const avX=205,avY=280,avR=104;
+  ctx.save();
+  ctx.shadowColor='rgba(157,92,255,.85)';
+  ctx.shadowBlur=32;
+  ctx.strokeStyle='#9d5cff';
+  ctx.lineWidth=5;
+  ctx.beginPath();
+  ctx.arc(avX,avY,avR+6,0,Math.PI*2);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(avX,avY,avR,0,Math.PI*2);
+  ctx.clip();
+  const avatarImg=document.querySelector('#char-av img');
+  if(!options.skipAvatar&&avatarImg&&avatarImg.complete){
+    try{ctx.drawImage(avatarImg,avX-avR,avY-avR,avR*2,avR*2);}
+    catch(e){drawDefaultAvatar(ctx,avX,avY,avR);}
+  }else{
+    drawDefaultAvatar(ctx,avX,avY,avR);
+  }
+  ctx.restore();
+
+  // Level shield
+  ctx.save();
+  ctx.fillStyle='rgba(123,47,255,.40)';
+  ctx.strokeStyle='rgba(157,92,255,.9)';
+  ctx.lineWidth=2;
+  ctx.shadowColor='rgba(123,47,255,.7)';
+  ctx.shadowBlur=18;
+  roundRect(ctx,285,345,82,72,16);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle='#e8ecf8';
+  ctx.font='900 44px Orbitron, monospace';
+  ctx.textAlign='center';
+  ctx.fillText(String(S.level||0),326,395);
+
+  // Name/rank
+  ctx.textAlign='left';
+  ctx.fillStyle='#f1f3ff';
+  const displayName=(S.name||'PLAYER').toUpperCase();
+  fitShareName(ctx,displayName,405,265,430);
+
+  ctx.fillStyle='#9d5cff';
+  ctx.font='700 30px Rajdhani, sans-serif';
+  ctx.fillText(getRankText().toUpperCase(),405,306);
+
+  // XP
+  const xp=S.xp||0;
+  const xpToNext=S.xpToNext||100;
+  const xpPct=Math.max(0,Math.min(1,xp/xpToNext));
+  ctx.fillStyle='rgba(232,236,248,.65)';
+  ctx.font='600 22px Rajdhani, sans-serif';
+  ctx.fillText(`УРОВЕНЬ ${S.level||0}`,405,365);
+  ctx.textAlign='right';
+  ctx.fillText(`${xp} / ${xpToNext} XP`,820,365);
+  ctx.textAlign='left';
+  ctx.fillStyle='rgba(18,23,42,.9)';
+  roundRect(ctx,405,384,415,28,14);
+  ctx.fill();
+  ctx.strokeStyle='rgba(157,92,255,.7)';
+  ctx.lineWidth=2;
+  roundRect(ctx,405,384,415,28,14);
+  ctx.stroke();
+  const bar=ctx.createLinearGradient(405,0,820,0);
+  bar.addColorStop(0,'#5a1fd4');
+  bar.addColorStop(.55,'#b76cff');
+  bar.addColorStop(1,'#4d94ff');
+  ctx.fillStyle=bar;
+  roundRect(ctx,408,387,Math.max(10,409*xpPct),22,11);
+  ctx.fill();
+
+  // Quote
+  ctx.fillStyle='rgba(123,47,255,.16)';
+  roundRect(ctx,405,445,415,72,14);
+  ctx.fill();
+  ctx.strokeStyle='rgba(123,47,255,.35)';
+  ctx.stroke();
+  ctx.fillStyle='rgba(232,236,248,.82)';
+  ctx.font='600 25px Rajdhani, sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText('“Маленькие шаги сегодня —',612,475);
+  ctx.fillText('большие победы завтра.”',612,503);
+
+  // Stats
   const stats=[
-    {val:S.level,lbl:t().levelStat},
-    {val:S.questsDone,lbl:t().questsStat},
-    {val:S.streak,lbl:'Стрик'},
+    {icon:'✦',val:S.questsDone||0,lbl:'КВЕСТОВ ВЫПОЛНЕНО'},
+    {icon:'🔥',val:S.streak||0,lbl:'ДНЕЙ ПОДРЯД'},
+    {icon:'XP',val:S.totalXp||0,lbl:'ОПЫТА ПОЛУЧЕНО'}
   ];
-  const bw=140,bh=68,gap=14,startX=(W-bw*3-gap*2)/2;
-  stats.forEach((s,i)=>{
-    const bx=startX+i*(bw+gap),by=298;
-    ctx.fillStyle='rgba(26,32,53,0.8)';roundRect(ctx,bx,by,bw,bh,10);ctx.fill();
-    ctx.strokeStyle='rgba(123,47,255,0.25)';ctx.lineWidth=1;roundRect(ctx,bx,by,bw,bh,10);ctx.stroke();
-    ctx.font='700 26px Orbitron,monospace';ctx.fillStyle='#e8ecf8';ctx.textAlign='center';ctx.fillText(s.val,bx+bw/2,by+36);
-    ctx.font='500 11px Rajdhani,sans-serif';ctx.fillStyle='rgba(255,255,255,0.4)';ctx.fillText(s.lbl.toUpperCase(),bx+bw/2,by+56);
+  const statY=580,statW=246,statH=132,statGap=20,statX=78;
+  stats.forEach((st,i)=>{
+    const x=statX+i*(statW+statGap);
+    ctx.fillStyle='rgba(19,24,40,.82)';
+    roundRect(ctx,x,statY,statW,statH,18);
+    ctx.fill();
+    ctx.strokeStyle='rgba(123,47,255,.32)';
+    ctx.stroke();
+    ctx.fillStyle=i===1?'#ff8040':(i===2?'#4d94ff':'#9d5cff');
+    ctx.font=i===2?'900 31px Orbitron, monospace':'900 40px Orbitron, monospace';
+    ctx.textAlign='center';
+    ctx.fillText(st.icon,x+statW/2,statY+42);
+    ctx.fillStyle='#f1f3ff';
+    ctx.font='900 42px Orbitron, monospace';
+    ctx.fillText(String(st.val),x+statW/2,statY+83);
+    ctx.fillStyle='rgba(232,236,248,.58)';
+    ctx.font='600 18px Rajdhani, sans-serif';
+    ctx.fillText(st.lbl,x+statW/2,statY+112);
   });
-  // Skills
-  const maxSkills=4;const showSkills=S.skills.slice(0,maxSkills);
-  const sw=showSkills.length?Math.min((W-48)/showSkills.length-8,120):120;
-  const sx=showSkills.length?(W-sw*showSkills.length-8*(showSkills.length-1))/2:W/2;
-  ctx.font='600 12px Rajdhani,sans-serif';
-  showSkills.forEach((sk,i)=>{
-    const x=sx+i*(sw+8),y=394;
-    ctx.fillStyle='rgba(123,47,255,0.12)';roundRect(ctx,x,y,sw,28,8);ctx.fill();
-    ctx.strokeStyle='rgba(123,47,255,0.3)';ctx.lineWidth=1;roundRect(ctx,x,y,sw,28,8);ctx.stroke();
-    ctx.fillStyle='#9d5cff';ctx.textAlign='center';ctx.fillText(translateSkillName(sk.name).slice(0,12),x+sw/2,y+18);
+
+  // Top skills
+  ctx.fillStyle='rgba(232,236,248,.42)';
+  ctx.font='700 24px Orbitron, monospace';
+  ctx.textAlign='center';
+  ctx.fillText('ТОП КАТЕГОРИИ',W/2,770);
+
+  const top=getTopSkills(3);
+  const skillY=805,skillW=240,skillH=72,skillStart=80;
+  top.forEach((sk,i)=>{
+    const x=skillStart+i*(skillW+20);
+    const pct=Math.min(100,Math.round(((sk.xp||0)/Math.max(S.totalXp||1,1))*100));
+    ctx.fillStyle='rgba(19,24,40,.82)';
+    roundRect(ctx,x,skillY,skillW,skillH,16);
+    ctx.fill();
+    ctx.strokeStyle='rgba(123,47,255,.28)';
+    ctx.stroke();
+    ctx.fillStyle='#e8ecf8';
+    ctx.font='700 22px Rajdhani, sans-serif';
+    ctx.textAlign='left';
+    ctx.fillText(trimText(ctx,(sk.name||'Skill').toUpperCase(),120),x+22,skillY+32);
+    ctx.fillStyle=['#9d5cff','#4d94ff','#00e5a0'][i]||'#9d5cff';
+    ctx.font='900 22px Orbitron, monospace';
+    ctx.textAlign='right';
+    ctx.fillText(`${pct}%`,x+skillW-22,skillY+32);
+    ctx.fillStyle='rgba(255,255,255,.08)';
+    roundRect(ctx,x+22,skillY+46,skillW-44,9,5);
+    ctx.fill();
+    ctx.fillStyle=['#9d5cff','#4d94ff','#00e5a0'][i]||'#9d5cff';
+    roundRect(ctx,x+22,skillY+46,(skillW-44)*pct/100,9,5);
+    ctx.fill();
   });
-  // Divider
-  ctx.strokeStyle='rgba(123,47,255,0.2)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(40,444);ctx.lineTo(W-40,444);ctx.stroke();
-  // Bot link
-  ctx.font='700 15px Orbitron,monospace';ctx.fillStyle=rg;ctx.textAlign='center';ctx.fillText('@GrowthArcBot',W/2,476);
-  ctx.font='500 12px Rajdhani,sans-serif';ctx.fillStyle='rgba(255,255,255,0.3)';ctx.fillText('t.me/GrowthArcBot',W/2,498);
-  // Footer
-  ctx.font='500 11px Rajdhani,sans-serif';ctx.fillStyle='rgba(255,255,255,0.2)';ctx.textAlign='center';ctx.fillText('GROWTH ARC · SYSTEM',W/2,H-30);
+
+  if(!top.length){
+    ctx.fillStyle='rgba(232,236,248,.45)';
+    ctx.font='600 24px Rajdhani, sans-serif';
+    ctx.fillText('Категории появятся после первых квестов',W/2,842);
+  }
+
+  // Last 7 days
+  ctx.fillStyle='rgba(19,24,40,.72)';
+  roundRect(ctx,78,925,744,112,18);
+  ctx.fill();
+  ctx.strokeStyle='rgba(123,47,255,.25)';
+  ctx.stroke();
+
+  ctx.textAlign='left';
+  ctx.fillStyle='rgba(232,236,248,.55)';
+  ctx.font='700 23px Orbitron, monospace';
+  ctx.fillText('ПОСЛЕДНИЕ 7 ДНЕЙ',118,962);
+
+  const marks=getLast7DayMarks();
+  marks.forEach((m,i)=>{
+    const x=120+i*64,y=995;
+    ctx.textAlign='center';
+    ctx.fillStyle='rgba(232,236,248,.55)';
+    ctx.font='700 16px Rajdhani, sans-serif';
+    ctx.fillText(m.label.toUpperCase(),x,y);
+    ctx.beginPath();
+    ctx.arc(x,y+32,16,0,Math.PI*2);
+    ctx.fillStyle=m.done?'rgba(0,229,160,.20)':'rgba(123,47,255,.08)';
+    ctx.fill();
+    ctx.strokeStyle=m.done?'#00e5a0':'rgba(157,92,255,.40)';
+    ctx.lineWidth=2;
+    ctx.stroke();
+    ctx.fillStyle=m.done?'#00e5a0':'rgba(232,236,248,.25)';
+    ctx.font='900 20px Rajdhani, sans-serif';
+    ctx.fillText(m.done?'✓':'',x,y+39);
+  });
+
+  ctx.textAlign='left';
+  ctx.fillStyle='#9d5cff';
+  ctx.font='900 34px Rajdhani, sans-serif';
+  ctx.fillText('@GrowthArcBot',118,1108);
+  ctx.fillStyle='rgba(232,236,248,.55)';
+  ctx.font='600 20px Rajdhani, sans-serif';
+  ctx.fillText('Прокачай свою жизнь вместе с Growth Arc',118,1138);
+
+  ctx.textAlign='center';
+  ctx.fillStyle='rgba(232,236,248,.28)';
+  ctx.font='600 16px Orbitron, monospace';
+  ctx.fillText('GROWTH ARC · SYSTEM',W/2,1172);
 }
+
 function drawDefaultAvatar(ctx,cx,cy,r){
-  ctx.fillStyle='rgba(26,32,53,1)';ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
-  ctx.font=`${r*0.8}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('⚔️',cx,cy+2);ctx.textBaseline='alphabetic';
+  ctx.fillStyle='rgba(26,32,53,1)';
+  ctx.beginPath();
+  ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.fill();
+  ctx.font=`${r*0.78}px serif`;
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText('⚔️',cx,cy+2);
+  ctx.textBaseline='alphabetic';
 }
+
 function roundRect(ctx,x,y,w,h,r){
   ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();
 }
-function fitText(ctx,text,x,y,maxWidth,maxSize,weight='700',family='Rajdhani,sans-serif'){
-  let size=maxSize;
-  const value=String(text||'');
-  do{
-    ctx.font=`${weight} ${size}px ${family}`;
-    if(ctx.measureText(value).width<=maxWidth)break;
-    size-=1;
-  }while(size>13);
-  let out=value;
-  while(ctx.measureText(out).width>maxWidth&&out.length>1){out=out.slice(0,-1);}
-  if(out!==value)out=out.slice(0,-1)+'…';
-  ctx.fillText(out,x,y);
+
+
+function fitShareName(ctx,text,x,y,maxWidth){
+  let size=54;
+  while(size>34){
+    ctx.font=`900 ${size}px Orbitron, monospace`;
+    if(ctx.measureText(text).width<=maxWidth)break;
+    size-=2;
+  }
+  ctx.fillText(trimText(ctx,text,maxWidth),x,y);
 }
-function canvasToImageBlob(canvas){
+
+function trimText(ctx,text,maxWidth){
+  const raw=String(text||'');
+  if(ctx.measureText(raw).width<=maxWidth)return raw;
+  let out=raw;
+  while(out.length>1&&ctx.measureText(out+'…').width>maxWidth){
+    out=out.slice(0,-1);
+  }
+  return out+'…';
+}
+
+function canvasToBlob(canvas){
   return new Promise((resolve,reject)=>{
-    try{
-      canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('Canvas export failed')),'image/png',0.95);
-    }catch(e){reject(e);}
+    canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('Canvas export failed')),'image/png',.95);
   });
 }
 
 async function doShare(){
   let canvas=document.getElementById('share-canvas');
   let blob;
+
   try{
-    blob=await canvasToImageBlob(canvas);
+    blob=await canvasToBlob(canvas);
   }catch(e){
-    console.warn('Share export failed, retrying without external avatar',e);
+    // Telegram avatar/photo URLs can taint a canvas on iOS/Telegram WebView.
+    // Once tainted, the same canvas cannot be exported even after clearRect(),
+    // so we replace it with a clean canvas and redraw the card without external images.
+    console.warn('Share image export failed, retrying without external avatar',e);
+    const freshCanvas=document.createElement('canvas');
+    freshCanvas.id='share-canvas';
+    freshCanvas.width=canvas.width;
+    freshCanvas.height=canvas.height;
+    freshCanvas.style.display=canvas.style.display;
+    freshCanvas.style.width=canvas.style.width;
+    freshCanvas.style.height=canvas.style.height;
+    canvas.parentNode.replaceChild(freshCanvas,canvas);
+    canvas=freshCanvas;
     drawShareCard({skipAvatar:true});
-    canvas=document.getElementById('share-canvas');
-    try{blob=await canvasToImageBlob(canvas);}catch(err){showToast(S.lang==='en'?'Could not create image':'Не удалось создать картинку');return;}
+
+    try{
+      blob=await canvasToBlob(canvas);
+    }catch(err){
+      console.warn('Share image export failed after clean redraw',err);
+      showToast(S.lang==='en'?'Could not create image':'Не удалось создать картинку');
+      return;
+    }
   }
 
-  const file=new File([blob],'growth-arc.png',{type:'image/png'});
+  const file=new File([blob],'growth-arc-progress.png',{type:'image/png'});
   if(navigator.canShare&&navigator.canShare({files:[file]})){
     try{
-      await navigator.share({files:[file],title:'Growth Arc'});
+      await navigator.share({files:[file]});
       trackEvent('share_progress_completed',{method:'native_file'});
       return;
-    }catch(e){if(e&&e.name==='AbortError')return;console.warn('Native share failed',e);}
+    }catch(e){
+      if(e&&e.name==='AbortError')return;
+      console.warn('Native file share failed',e);
+    }
   }
+
   const url=URL.createObjectURL(blob);
-  if(window.Telegram?.WebApp?.openLink){window.Telegram.WebApp.openLink(url);}
-  else{const a=document.createElement('a');a.href=url;a.download='growth-arc.png';a.click();}
-  trackEvent('share_progress_completed',{method:'image_only'});
+
+  if(window.Telegram?.WebApp?.openLink){
+    window.Telegram.WebApp.openLink(url);
+    trackEvent('share_progress_completed',{method:'open_image'});
+  }else{
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='growth-arc-progress.png';
+    a.click();
+    trackEvent('share_progress_completed',{method:'download'});
+  }
 }
+
 function shareText(text){navigator.clipboard?.writeText(text);showToast(S.lang==='en'?'Copied!':'Скопировано!');}
 
 // ══════════════════════════════════════════════
