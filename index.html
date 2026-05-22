@@ -152,10 +152,14 @@ html,body{background:var(--bg0);color:var(--text);font-family:'Rajdhani',sans-se
 .prog-hdr{display:flex;justify-content:space-between;margin-bottom:5px;}
 .prog-lbl{font-size:11px;color:var(--text3);}
 .prog-val{font-size:11px;font-weight:700;color:var(--p3);}
-.prog-wrap{position:relative;padding:8px 0;cursor:pointer;}
-.prog-track{height:6px;background:var(--bg5);border-radius:3px;overflow:visible;}
-.prog-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--p2),var(--p3),var(--b3));transition:width .1s ease;position:relative;box-shadow:0 0 8px rgba(123,47,255,.4);}
-.prog-fill::after{content:'';position:absolute;right:-8px;top:50%;transform:translateY(-50%);width:16px;height:16px;border-radius:50%;background:white;box-shadow:0 0 8px var(--p);cursor:grab;}
+.prog-wrap{position:relative;padding:20px 0;cursor:pointer;touch-action:none;user-select:none;}
+.prog-track{height:7px;background:var(--bg5);border-radius:4px;overflow:visible;position:relative;}
+.prog-track::before{content:'';position:absolute;left:0;right:0;top:50%;height:44px;transform:translateY(-50%);}
+.prog-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--p2),var(--p3),var(--b3));transition:width .08s ease;position:relative;box-shadow:0 0 8px rgba(123,47,255,.4);}
+.prog-fill::after{content:'';position:absolute;right:-13px;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0%,#e8dcff 42%,#9d5cff 100%);border:2px solid rgba(255,255,255,.85);box-shadow:0 0 10px rgba(157,92,255,.95),0 0 24px rgba(123,47,255,.45);cursor:grab;}
+.prog-wrap.dragging .prog-fill::after{transform:translateY(-50%) scale(1.12);box-shadow:0 0 14px rgba(157,92,255,1),0 0 34px rgba(77,148,255,.45);}
+.prog-bubble{position:absolute;top:-12px;left:0;transform:translateX(-50%);padding:4px 9px;border-radius:10px;background:rgba(13,16,32,.96);border:1px solid rgba(123,47,255,.45);box-shadow:0 0 14px rgba(123,47,255,.35);color:var(--p3);font-family:'Orbitron',monospace;font-size:11px;font-weight:800;letter-spacing:.5px;opacity:0;pointer-events:none;transition:opacity .12s ease, left .08s ease;}
+.prog-wrap.dragging .prog-bubble{opacity:1;}
 /* TIMER */
 .timer-block{background:var(--bg4);border:1px solid var(--brd2);border-radius:var(--r2);padding:10px 12px;margin-top:8px;}
 .timer-hdr{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
@@ -1516,6 +1520,7 @@ function renderQuests(){
       </div>
       <div class="prog-hdr"><span class="prog-lbl">${q.goalNum&&q.goalUnit?q.goalUnit:''}</span><span class="prog-val" id="pval-${q.id}">${targetSec?fmtTime(Math.min(q.timeSpentSeconds||0,targetSec))+' / '+fmtTime(targetSec):(q.goalNum&&q.goalUnit?Math.round((q.progress||0)*q.goalNum)+' / '+q.goalNum:pct+'%')}</span></div>
       <div class="prog-wrap" id="pslider-${q.id}">
+        <div class="prog-bubble" id="pbubble-${q.id}" style="left:${pct}%">${q.goalNum&&q.goalUnit?Math.round((q.progress||0)*q.goalNum):pct}${q.goalNum&&q.goalUnit?'':'%'}</div>
         <div class="prog-track" id="ptrack-${q.id}">
           <div class="prog-fill" style="width:${pct}%" id="pfill-${q.id}"></div>
         </div>
@@ -1541,35 +1546,117 @@ function bindSlider(id){
   const track=document.getElementById('ptrack-'+id);
   if(!wrap||!track)return;
   const q=S.quests.find(x=>x.id===id);
+  if(!q)return;
+
   let drag=false;
-  function setP(e){
-    const rect=track.getBoundingClientRect();
-    const cx=e.touches?e.touches[0].clientX:e.clientX;
-    const pct=Math.max(0,Math.min(1,(cx-rect.left)/rect.width));
-    if(!q)return;
-    q.progress=pct;
-    const p=Math.round(pct*100);
-    const fill=document.getElementById('pfill-'+id);if(fill)fill.style.width=p+'%';
-    const pval=document.getElementById('pval-'+id);
-    if(pval){
-      if(q.goalNum&&q.goalUnit) pval.textContent=Math.round(pct*q.goalNum)+' / '+q.goalNum;
-      else pval.textContent=p+'%';
+  let lastHapticValue=null;
+
+  function getClientX(e){
+    if(e.touches&&e.touches[0])return e.touches[0].clientX;
+    if(e.changedTouches&&e.changedTouches[0])return e.changedTouches[0].clientX;
+    return e.clientX;
+  }
+
+  function applyMagnet(rawPct){
+    let pct=Math.max(0,Math.min(1,rawPct));
+
+    if(q.goalNum&&q.goalUnit){
+      const goal=Math.max(1,Number(q.goalNum)||1);
+      const value=Math.max(0,Math.min(goal,Math.round(pct*goal)));
+      pct=value/goal;
+    }else{
+      pct=Math.round(pct*100)/100;
     }
+
+    [0,.25,.5,.75,1].forEach(point=>{
+      if(Math.abs(pct-point)<=0.018)pct=point;
+    });
+
+    return Math.max(0,Math.min(1,pct));
+  }
+
+  function formatProgress(pct){
+    const p=Math.round(pct*100);
+    if(q.goalNum&&q.goalUnit){
+      return {
+        main: Math.round(pct*q.goalNum)+' / '+q.goalNum,
+        bubble: String(Math.round(pct*q.goalNum)),
+        percent: p
+      };
+    }
+    return {
+      main: p+'%',
+      bubble: p+'%',
+      percent: p
+    };
+  }
+
+  function haptic(value){
+    if(value===lastHapticValue)return;
+    lastHapticValue=value;
+    try{
+      window.Telegram?.WebApp?.HapticFeedback?.selectionChanged?.();
+    }catch(e){}
+  }
+
+  function setP(e,commit=false){
+    if(e&&e.cancelable)e.preventDefault();
+
+    const rect=track.getBoundingClientRect();
+    const cx=getClientX(e);
+    const pct=applyMagnet((cx-rect.left)/rect.width);
+    q.progress=pct;
+
+    const info=formatProgress(pct);
+    const fill=document.getElementById('pfill-'+id);
+    if(fill)fill.style.width=info.percent+'%';
+
+    const bubble=document.getElementById('pbubble-'+id);
+    if(bubble){
+      bubble.textContent=info.bubble;
+      bubble.style.left=info.percent+'%';
+    }
+
+    const pval=document.getElementById('pval-'+id);
+    if(pval)pval.textContent=info.main;
+
     const btn=document.getElementById('qbtn-'+id);
     if(btn){
       const tx=t();
-      btn.disabled=p<100;
+      btn.disabled=info.percent<100;
       const svgIcon=`<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"><g stroke="white" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><path d="m5.1 12.35 4.2 4.2 9.6-9.6"/><path d="M4.2 12a7.8 7.8 0 1 0 15.6 0 7.8 7.8 0 0 0-15.6 0Z"/></g></svg>`;
-      btn.innerHTML=svgIcon+(p>=100?tx.complete:`${tx.completeProgress} (${p}%)`);
+      btn.innerHTML=svgIcon+(info.percent>=100?tx.complete:`${tx.completeProgress} (${info.percent}%)`);
     }
+
+    haptic(q.goalNum&&q.goalUnit?info.bubble:info.percent);
+
+    if(commit)save();
+  }
+
+  function start(e){
+    drag=true;
+    wrap.classList.add('dragging');
+    setP(e,false);
+  }
+
+  function move(e){
+    if(drag)setP(e,false);
+  }
+
+  function end(){
+    if(!drag)return;
+    drag=false;
+    wrap.classList.remove('dragging');
     save();
   }
-  wrap.addEventListener('mousedown',e=>{drag=true;setP(e);});
-  wrap.addEventListener('touchstart',e=>{drag=true;setP(e);},{passive:true});
-  document.addEventListener('mousemove',e=>{if(drag)setP(e);});
-  document.addEventListener('touchmove',e=>{if(drag)setP(e);},{passive:true});
-  document.addEventListener('mouseup',()=>{drag=false;});
-  document.addEventListener('touchend',()=>{drag=false;});
+
+  wrap.addEventListener('mousedown',start);
+  wrap.addEventListener('touchstart',start,{passive:false});
+  document.addEventListener('mousemove',move);
+  document.addEventListener('touchmove',move,{passive:false});
+  document.addEventListener('mouseup',end);
+  document.addEventListener('touchend',end);
+  document.addEventListener('touchcancel',end);
 }
 
 function renderLog(){
