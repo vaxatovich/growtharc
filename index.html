@@ -955,6 +955,13 @@ let S={
   streakSavedToday:false,
   lastQuestDate:'',
   lastGameDay:'',
+  todayGameDay:'',
+  todayQuestsDone:0,
+  todayXp:0,
+  questsDoneToday:0,
+  xpToday:0,
+  dailyQuestsDone:0,
+  dailyXp:0,
   dayStartHour:6,
   dayStartMin:0,
   theme:'dark',
@@ -988,7 +995,7 @@ function getTelegramInitData(){
 
 function loadLocal(){
   const d=localStorage.getItem('growtharc_v4');
-  if(d)try{S={...S,...JSON.parse(d)};normalizeBuiltInSkillsForLang(S.lang);applyTheme();}catch(e){console.warn('Local state parse failed',e);}
+  if(d)try{S={...S,...JSON.parse(d)};normalizeBuiltInSkillsForLang(S.lang);ensureTodayStats();applyTheme();}catch(e){console.warn('Local state parse failed',e);}
 }
 
 function saveLocal(){
@@ -1038,6 +1045,9 @@ function identifyUser(){
       level: S.level,
       totalXp: S.totalXp,
       questsDone: S.questsDone,
+      todayQuestsDone: S.todayQuestsDone || 0,
+      todayXp: S.todayXp || 0,
+      todayGameDay: S.todayGameDay || getGameDay(),
       streak: S.streak,
       notificationsEnabled: S.notificationsEnabled !== false
     });
@@ -1056,6 +1066,9 @@ function trackEvent(name, params={}){
       level: S.level,
       totalXp: S.totalXp,
       questsDone: S.questsDone,
+      todayQuestsDone: S.todayQuestsDone || 0,
+      todayXp: S.todayXp || 0,
+      todayGameDay: S.todayGameDay || getGameDay(),
       streak: S.streak,
       notificationsEnabled: S.notificationsEnabled !== false
     });
@@ -1085,6 +1098,7 @@ async function loadFromBackend(){
   if(data.state){
     S={...S,...data.state};
     normalizeBuiltInSkillsForLang(S.lang);
+    ensureTodayStats();
     applyTheme();
     saveLocal();
     return true;
@@ -1099,6 +1113,7 @@ function scheduleBackendSave(){
   saveTimer=setTimeout(async()=>{
     try{
       syncTelegramUserIntoState();
+      ensureTodayStats();
       await apiRequest('/state',{
         method:'POST',
         body:JSON.stringify({state:S})
@@ -1391,12 +1406,46 @@ function getGameDay(){
   if(now<start)start.setDate(start.getDate()-1);
   return start.toDateString();
 }
+function resetTodayStats(dayKey=getGameDay()){
+  S.todayGameDay=dayKey;
+  S.todayQuestsDone=0;
+  S.todayXp=0;
+  S.questsDoneToday=0;
+  S.xpToday=0;
+  S.dailyQuestsDone=0;
+  S.dailyXp=0;
+}
+function ensureTodayStats(){
+  const dayKey=getGameDay();
+  if(S.todayGameDay!==dayKey)resetTodayStats(dayKey);
+  S.todayQuestsDone=Number(S.todayQuestsDone||0);
+  S.todayXp=Number(S.todayXp||0);
+  S.questsDoneToday=S.todayQuestsDone;
+  S.xpToday=S.todayXp;
+  S.dailyQuestsDone=S.todayQuestsDone;
+  S.dailyXp=S.todayXp;
+  return dayKey;
+}
+function addTodayStats(xp){
+  const dayKey=ensureTodayStats();
+  const gained=Number(xp||0);
+  S.todayQuestsDone=Number(S.todayQuestsDone||0)+1;
+  S.todayXp=Number(S.todayXp||0)+gained;
+  S.questsDoneToday=S.todayQuestsDone;
+  S.xpToday=S.todayXp;
+  S.dailyQuestsDone=S.todayQuestsDone;
+  S.dailyXp=S.todayXp;
+  S.todayGameDay=dayKey;
+}
 function checkDayReset(){
   const today=getGameDay();
   if(S.lastGameDay&&S.lastGameDay!==today){
     if(!S.streakSavedToday)S.streak=0;
     S.streakSavedToday=false;
+    resetTodayStats(today);
     resetPeriodQuests(today);
+  }else{
+    ensureTodayStats();
   }
   S.lastGameDay=today;save();
 }
@@ -1844,6 +1893,61 @@ function submitQuest(){
   save();closeModal();switchTab('quests');renderAll();
 }
 
+
+function vibrateCompletion(){
+  try{
+    const hf=window.Telegram?.WebApp?.HapticFeedback;
+    if(hf&&hf.notificationOccurred){
+      hf.notificationOccurred('success');
+      return true;
+    }
+  }catch(e){}
+  try{
+    if(navigator.vibrate){
+      navigator.vibrate([45,30,70]);
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+let completionAudioCtx=null;
+function playCompletionSound(){
+  return new Promise((resolve)=>{
+    try{
+      const AudioContext=window.AudioContext||window.webkitAudioContext;
+      if(!AudioContext){resolve(false);return;}
+      const ctx=completionAudioCtx||new AudioContext();
+      completionAudioCtx=ctx;
+      const run=()=>{
+        const now=ctx.currentTime;
+        const gain=ctx.createGain();
+        gain.connect(ctx.destination);
+        gain.gain.setValueAtTime(0.0001,now);
+        gain.gain.exponentialRampToValueAtTime(0.075,now+0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001,now+0.34);
+        const notes=[520,780,1040];
+        notes.forEach((freq,i)=>{
+          const osc=ctx.createOscillator();
+          osc.type='sine';
+          osc.frequency.setValueAtTime(freq,now+i*0.075);
+          osc.connect(gain);
+          osc.start(now+i*0.075);
+          osc.stop(now+i*0.075+0.16);
+        });
+        resolve(true);
+      };
+      if(ctx.state==='suspended'){
+        ctx.resume().then(run).catch(()=>resolve(false));
+      }else run();
+    }catch(e){resolve(false);}
+  });
+}
+function completionFeedback(){
+  playCompletionSound().then((played)=>{
+    if(!played)vibrateCompletion();
+  }).catch(()=>vibrateCompletion());
+}
+
 // ══════════════════════════════════════════════
 //  QUEST COMPLETE
 // ══════════════════════════════════════════════
@@ -1851,6 +1955,7 @@ function getStreakBonus(){for(const b of STREAK_BONUSES){if(S.streak>=b.days)ret
 function completeQuest(id){
   const q=S.quests.find(x=>x.id===id);if(!q||q.progress<1)return;
   if(q.timerStatus==='running')pauseTimer(id);
+  completionFeedback();
   const baseXp=DIFF_XP[q.diff],bonus=getStreakBonus(),earned=Math.round(baseXp*(1+bonus/100));
   const qTimeSpent=q.timeSpentSeconds||0;
   const timeStr=qTimeSpent>0?fmtTime(qTimeSpent):'';
@@ -1861,6 +1966,7 @@ function completeQuest(id){
     const today=new Date().toLocaleDateString();
     S.log.push({id:Date.now(),title:q.title,skill:q.skill,diff:q.diff,type:q.type,xp:earned,date:today,timeStr,timeSec:qTimeSpent});
     S.questsDone++;
+    addTodayStats(earned);
     const completedQuestType=q.type;
     if(q.type==='once') S.quests=S.quests.filter(x=>x.id!==id);
     else{q.progress=0;q.completedThisPeriod=true;q.lastCompletedDate=new Date().toDateString();q.timeSpentSeconds=0;q.timerStatus='idle';q.timerAutoCompleting=false;}
