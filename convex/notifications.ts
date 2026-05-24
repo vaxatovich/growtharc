@@ -41,6 +41,47 @@ function isWithinWindow(current: number, target: number) {
   return diff >= 0 && diff < CHECK_WINDOW_MINUTES;
 }
 
+function normalizeDateKey(value: any) {
+  if (!value) return "";
+  const parsed = new Date(value);
+  if (!Number.isNaN(parsed.getTime())) {
+    return new Date(Date.UTC(parsed.getFullYear(), parsed.getMonth(), parsed.getDate())).toDateString();
+  }
+  return String(value);
+}
+
+function getDailyStats(state: any, gameDayKey: string) {
+  if (state.todayDateKey === gameDayKey) {
+    return {
+      questsToday: Number(state.todayQuestsDone || 0),
+      xpToday: Number(state.todayXp || 0),
+    };
+  }
+
+  const todayLogs = Array.isArray(state.log)
+    ? state.log.filter((item: any) => {
+        const key = item.dateKey || item.gameDayKey || item.date;
+        return normalizeDateKey(key) === gameDayKey;
+      })
+    : [];
+
+  return {
+    questsToday: todayLogs.length,
+    xpToday: todayLogs.reduce((sum: number, item: any) => sum + Number(item.xp || 0), 0),
+  };
+}
+
+function wasQuestCompletedOnDay(state: any, gameDayKey: string) {
+  if (state.lastQuestDate === gameDayKey) return true;
+  if (state.todayDateKey === gameDayKey && Number(state.todayQuestsDone || 0) > 0) return true;
+
+  if (!Array.isArray(state.log)) return false;
+  return state.log.some((item: any) => {
+    const key = item.dateKey || item.gameDayKey || item.date;
+    return normalizeDateKey(key) === gameDayKey;
+  });
+}
+
 async function sendTelegramMessage(telegramId: string, text: string) {
   const token = process.env.BOT_TOKEN;
   const appUrl = process.env.APP_URL;
@@ -107,7 +148,7 @@ export const checkAndSend = internalAction({
       const summaryMinutes = (startMinutes - 10 + 1440) % 1440;
 
       const gameDayKey = getGameDayKey(now, state);
-      const completedToday = state.lastQuestDate === gameDayKey;
+      const completedToday = wasQuestCompletedOnDay(state, gameDayKey);
 
       const nextState = { ...state };
       let changed = false;
@@ -155,12 +196,7 @@ export const checkAndSend = internalAction({
         isWithinWindow(currentMinutes, summaryMinutes) &&
         state.lastDailySummaryNotification !== gameDayKey
       ) {
-        const todayLogs = Array.isArray(state.log)
-          ? state.log.filter((item: any) => item.dateKey === gameDayKey || item.date === gameDayKey)
-          : [];
-
-        const questsToday = todayLogs.length;
-        const xpToday = todayLogs.reduce((sum: number, item: any) => sum + Number(item.xp || 0), 0);
+        const { questsToday, xpToday } = getDailyStats(state, gameDayKey);
 
         try {
           await sendTelegramMessage(
